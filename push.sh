@@ -13,7 +13,7 @@ LOG="$LOGDIR/build-$(date +%Y-%m-%d_%H%M%S).log"
 mkdir -p "$LOGDIR"
 exec > >(tee -a "$LOG") 2>&1
 
-## ── 1. Build individual packages with nix-fast-build & update blacklist ──────
+## ── 1. Build individual packages with nix-fast-build ──────
 echo "[$(date)] Regenerating bioc_list.nix..."
 Rscript "$DIR/gen_packages.R"
 
@@ -25,28 +25,32 @@ nix run .#nix-fast-build -- \
   --no-link \
   --skip-cached
 
-echo "[$(date)] Updating blacklist..."
-python3 "$DIR/update-blacklist.py" "$DIR/results.json" "$DIR/blacklist.txt"
+# ── 2. Run update-blacklist and output built paths ───────────────────────────
+echo "[$(date)] Updating blacklist and finding newly built paths..."
+BUILT_PATHS_FILE="$DIR/built-paths.txt"
+python3 "$DIR/update-blacklist.py" "$DIR/results.json" "$DIR/blacklist.txt" "$BUILT_PATHS_FILE"
 
 echo "[$(date)] Re-regenerating bioc_list.nix with updated blacklist..."
 Rscript "$DIR/gen_packages.R"
 
-# ── 2. Final build of rEnv (should be perfectly clean now) ───────────────────
-echo "[$(date)] Starting final build of rEnv..."
-nix-build "$EXPR" -A rEnv -o "$RESULT"
+# ── 3. Collect & Sign & Push newly built paths ────────────────────────────────
+if [ -s "$BUILT_PATHS_FILE" ]; then
+  echo "[$(date)] Newly built packages detected. Collecting store paths (runtime closure)..."
+  # Read paths from file and pass them to nix-store -qR
+  PATHS=$(nix-store -qR $(cat "$BUILT_PATHS_FILE"))
+  
+  echo "[$(date)] Saving cached paths log..."
+  echo "$PATHS" | sort > "$LOGDIR/cached-paths-$(date +%Y-%m-%d_%H%M%S).txt"
 
-# ── 3. Collect paths ──────────────────────────────────────────────────────────
-echo "[$(date)] Collecting store paths (runtime closure)..."
-PATHS=$(nix-store -qR "$RESULT")
-echo "$PATHS" | sort > "$LOGDIR/cached-paths-$(date +%Y-%m-%d_%H%M%S).txt"
+  echo "[$(date)] Signing store paths..."
+  nix store sign --key-file "$KEY" $PATHS
 
-# ── 4. Sign & push ────────────────────────────────────────────────────────────
-echo "[$(date)] Signing store paths..."
-nix store sign --key-file "$KEY" $PATHS
+  echo "[$(date)] Pushing to Attic (NFS)..."
+  $ATTIC push "$CACHE" $PATHS --jobs 1
+else
+  echo "[$(date)] No newly built packages detected. Attic cache is already up-to-date!"
+fi
 
-echo "[$(date)] Pushing to Attic (NFS)..."
-$ATTIC push "$CACHE" $PATHS --jobs 1
-
-# ── 5. Clean up ───────────────────────────────────────────────────────────────
-rm -f "$RESULT"
+# ── 4. Clean up ───────────────────────────────────────────────────────────────
+rm -f "$BUILT_PATHS_FILE" "$DIR/results.json"
 echo "[$(date)] Done."
