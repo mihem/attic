@@ -24,7 +24,8 @@ nix run .#nix-fast-build -- \
   -A rPackagesSet \
   --result-file "$DIR/results.json" \
   --no-link \
-  --skip-cached
+  --skip-cached \
+  --no-nom || true
 
 # ── 2. Run update-blacklist and output built paths ───────────────────────────
 echo "[$(date)] Updating blacklist and finding active local paths..."
