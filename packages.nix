@@ -42,6 +42,12 @@ let
 
   allR = [ BPCells ] ++ rpkgs ++ bioc_pkgs;
 
+  # Expose individual R packages as an attribute set so nix-fast-build can evaluate and build them individually.
+  rPackagesSet = builtins.listToAttrs (builtins.map (pkg: {
+    name = if builtins.hasAttr "pname" pkg then pkg.pname else pkg.name;
+    value = pkg;
+  }) allR);
+
   # Build a single combined environment (symlink farm) containing everything.
   # buildEnv handles 1000+ packages without ARG_MAX because it doesn't pass
   # the list to any shell command.
@@ -52,4 +58,4 @@ let
     ignoreCollisions = true;
   };
 in
-  { inherit pkgs rEnv; }
+  { inherit pkgs rEnv rPackagesSet; }

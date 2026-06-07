@@ -3,7 +3,7 @@ set -euo pipefail
 
 ATTIC=/etc/attic/attic-client-bin/bin/attic
 CACHE="r-packages"
-DIR="/home/ubuntu/attic"
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EXPR="$DIR/packages.nix"
 KEY="/etc/attic/signing-key.sec"
 RESULT="$DIR/result"
@@ -13,12 +13,26 @@ LOG="$LOGDIR/build-$(date +%Y-%m-%d_%H%M%S).log"
 mkdir -p "$LOGDIR"
 exec > >(tee -a "$LOG") 2>&1
 
-## ── 1. Fix blacklist (detect & blacklist any build failures) ──────────────────
-echo "[$(date)] Checking for build failures and updating blacklist..."
-bash "$DIR/fix-blacklist.sh"
+## ── 1. Build individual packages with nix-fast-build & update blacklist ──────
+echo "[$(date)] Regenerating bioc_list.nix..."
+Rscript "$DIR/gen_packages.R"
 
-# ── 2. Final build (should be clean after fix-blacklist.sh) ──────────────────
-echo "[$(date)] Starting final build..."
+echo "[$(date)] Running nix-fast-build to build all individual packages..."
+nix run .#nix-fast-build -- \
+  --file "$EXPR" \
+  -A rPackagesSet \
+  --result-file "$DIR/results.json" \
+  --no-link \
+  --skip-cached
+
+echo "[$(date)] Updating blacklist..."
+python3 "$DIR/update-blacklist.py" "$DIR/results.json" "$DIR/blacklist.txt"
+
+echo "[$(date)] Re-regenerating bioc_list.nix with updated blacklist..."
+Rscript "$DIR/gen_packages.R"
+
+# ── 2. Final build of rEnv (should be perfectly clean now) ───────────────────
+echo "[$(date)] Starting final build of rEnv..."
 nix-build "$EXPR" -A rEnv -o "$RESULT"
 
 # ── 3. Collect paths ──────────────────────────────────────────────────────────

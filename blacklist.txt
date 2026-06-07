@@ -1,6 +1,6 @@
 # Packages that fail to build or evaluate in nixpkgs.
 # One R/Bioc package name per line. Lines starting with # are comments.
-# This file is read by gen_packages.R and maintained by fix-blacklist.sh.
+# This file is read by gen_packages.R and maintained by update-blacklist.py.
 # marked broken in nixpkgs (meta.broken = true)
 zlibbioc
 interactiveDisplayBase
