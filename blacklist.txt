@@ -1,0 +1,48 @@
+# Packages that fail to build or evaluate in nixpkgs.
+# One R/Bioc package name per line. Lines starting with # are comments.
+# This file is read by gen_packages.R and maintained by fix-blacklist.sh.
+# marked broken in nixpkgs (meta.broken = true)
+zlibbioc
+interactiveDisplayBase
+RcisTarget
+DEP
+hpar
+soGGi
+cummeRbund
+interactiveDisplay
+Repitools
+motifbreakR
+rGADEM
+BiRewire
+BPRMeth
+cellHTS2
+copynumber
+DeconRNASeq
+DESeq
+exomeCopy
+girafe
+HIBAG
+microbiomeMarker
+MineICA
+Organism.dplyr
+PICS
+profileplyr
+RiboProfiling
+Ringo
+signatureSearch
+supraHex
+TransView
+BulkSignalR
+MetaNeighbor
+# build-time failures (C API changes, lazy loading errors, etc.)
+HiveR
+MoonlightR
+SharedObject
+cn.farms
+metaboliteIDmapping
+multiGSEA
+COMPASS
+SingleCellSignalR
+CONFESS
+GOfuncR
+geneXtendeR
