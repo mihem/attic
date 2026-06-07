@@ -52,7 +52,7 @@ if [ -s "$BUILT_PATHS_FILE" ]; then
   RETRY_DELAY=5
   for ((i=1; i<=MAX_RETRIES; i++)); do
     echo "[$(date)] Attic push attempt $i of $MAX_RETRIES..."
-    if $ATTIC push "$CACHE" $PATHS --jobs 1; then
+    if $ATTIC push "$CACHE" $PATHS --jobs 8; then
       echo "[$(date)] Attic push completed successfully!"
       break
     else
