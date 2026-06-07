@@ -12,7 +12,7 @@ LOG="$LOGDIR/build-$(date +%Y-%m-%d_%H%M%S).log"
 
 mkdir -p "$LOGDIR"
 # Filter out annoying and harmless Nix warnings (e.g. unknown settings) from the output in real-time
-exec > >(grep --line-buffered -v -E "warning: unknown setting '.*'" | tee -a "$LOG") 2>&1
+exec > >(grep --line-buffered -v "unknown setting" | tee -a "$LOG") 2>&1
 
 ## ── 1. Build individual packages with nix-fast-build ──────
 echo "[$(date)] Regenerating bioc_list.nix..."
