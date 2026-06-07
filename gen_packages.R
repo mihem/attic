@@ -6,7 +6,7 @@
 # with # are comments). No inline comments allowed; blacklist.txt must contain
 # only package names (or full-line comments).
 
-bioc_n <- 1000
+bioc_n <- 1500
 
 # Read blacklist: strip full-line comments and everything after first whitespace
 lines <- readLines("blacklist.txt")
