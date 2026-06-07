@@ -71,7 +71,7 @@ def main():
         with open(built_paths_out_path, 'w') as f:
             for path in unique_success_paths:
                 f.write(f"{path}\n")
-        print(f"Wrote {len(unique_success_paths)} local built paths to {built_paths_out_path}")
+        print(f"Identified {len(unique_success_paths)} active local store paths to verify.")
 
 if __name__ == '__main__':
     main()
