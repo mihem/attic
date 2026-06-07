@@ -7,7 +7,8 @@ let
   pkgs = import (fetchTarball "https://github.com/rstats-on-nix/nixpkgs/archive/2026-05-18.tar.gz") { config = { allowBroken = true; }; };
 
   bioc_names = import ./bioc_list.nix;
-  bioc_pkgs  = builtins.map (name: pkgs.rPackages.${name}) bioc_names;
+  valid_bioc_names = builtins.filter (name: builtins.hasAttr name pkgs.rPackages) bioc_names;
+  bioc_pkgs  = builtins.map (name: pkgs.rPackages.${name}) valid_bioc_names;
 
   rpkgs = builtins.attrValues {
     inherit (pkgs.rPackages)
