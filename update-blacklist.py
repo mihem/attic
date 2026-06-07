@@ -31,10 +31,11 @@ def main():
                     attr = attr[1:-1]
                 failed_packages.add(attr)
         else:
-            outputs = r.get('outputs', {})
-            for out_path in outputs.values():
-                if out_path and os.path.exists(out_path):
-                    success_paths.append(out_path)
+            if r.get('type') == 'BUILD':
+                outputs = r.get('outputs', {})
+                for out_path in outputs.values():
+                    if out_path and os.path.exists(out_path):
+                        success_paths.append(out_path)
 
     # 1. Update Blacklist
     if failed_packages:
