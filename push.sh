@@ -47,8 +47,24 @@ if [ -s "$BUILT_PATHS_FILE" ]; then
   echo "[$(date)] Signing store paths..."
   nix store sign --key-file "$KEY" $PATHS
 
-  echo "[$(date)] Pushing to Attic (NFS)..."
-  $ATTIC push "$CACHE" $PATHS --jobs 1
+  echo "[$(date)] Pushing to Attic (NFS) with automatic retries for transient errors..."
+  MAX_RETRIES=5
+  RETRY_DELAY=5
+  for ((i=1; i<=MAX_RETRIES; i++)); do
+    echo "[$(date)] Attic push attempt $i of $MAX_RETRIES..."
+    if $ATTIC push "$CACHE" $PATHS --jobs 1; then
+      echo "[$(date)] Attic push completed successfully!"
+      break
+    else
+      if [ $i -lt $MAX_RETRIES ]; then
+        echo "[$(date)] Attic push failed on some paths. Retrying in $RETRY_DELAY seconds..."
+        sleep $RETRY_DELAY
+      else
+        echo "[$(date)] Attic push failed after $MAX_RETRIES attempts."
+        exit 1
+      fi
+    fi
+  done
 else
   echo "[$(date)] No active local store paths detected. Attic cache is already up-to-date!"
 fi
