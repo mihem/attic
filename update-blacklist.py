@@ -20,6 +20,7 @@ def main():
         data = json.load(f)
 
     failed_packages = set()
+    ignored_upload_failures = set()
     success_paths = []
 
     for r in data.get('results', []):
@@ -29,13 +30,24 @@ def main():
                 # Strip escaped quotes (e.g. '"Organism.dplyr"' -> 'Organism.dplyr')
                 if attr.startswith('"') and attr.endswith('"'):
                     attr = attr[1:-1]
-                failed_packages.add(attr)
+                if r.get('type') == 'ATTIC':
+                    ignored_upload_failures.add(attr)
+                else:
+                    failed_packages.add(attr)
         else:
             if r.get('type') == 'BUILD':
                 outputs = r.get('outputs', {})
                 for out_path in outputs.values():
                     if out_path and os.path.exists(out_path):
                         success_paths.append(out_path)
+
+    if ignored_upload_failures:
+        print(
+            f"Ignoring {len(ignored_upload_failures)} Attic upload failures "
+            "for blacklist purposes:"
+        )
+        for pkg in sorted(ignored_upload_failures):
+            print(f"  -> upload failed, not blacklisted: {pkg}")
 
     # 1. Update Blacklist
     if failed_packages:
