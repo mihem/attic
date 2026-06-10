@@ -34,13 +34,15 @@ python3 "$DIR/update-blacklist.py" "$RESULTS_JSON" "$DIR/blacklist.txt" "$BUILT_
 echo "[$(date)] Re-regenerating bioc_list.nix with updated blacklist..."
 Rscript "$DIR/gen_packages.R"
 
-# ── 3. Report paths uploaded by nix-fast-build ───────────────────────────────
+# ── 3. Report successful local paths and upload/build summary ────────────────
 if [ -s "$BUILT_PATHS_FILE" ]; then
-  echo "[$(date)] nix-fast-build uploaded these active local paths to Attic."
+  echo "[$(date)] nix-fast-build produced these active local paths."
   cp "$BUILT_PATHS_FILE" "$LOGDIR/built-paths-$(date +%Y-%m-%d_%H%M%S).txt"
 else
   echo "[$(date)] No active local store paths detected. Attic cache is already up-to-date!"
 fi
+
+python3 "$DIR/summarize-results.py" "$RESULTS_JSON"
 
 # ── 4. Clean up ───────────────────────────────────────────────────────────────
 rm -f "$BUILT_PATHS_FILE" "$RESULTS_JSON"
