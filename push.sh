@@ -2,6 +2,7 @@
 set -euo pipefail
 
 CACHE="r-packages"
+ATTIC_DB="/var/lib/attic/server.db"
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EXPR="$DIR/packages.nix"
 LOGDIR="$DIR/logs"
@@ -14,10 +15,11 @@ mkdir -p "$LOGDIR"
 exec > >(grep --line-buffered -v "unknown setting" | tee -a "$LOG") 2>&1
 
 ## ── 1. Build individual packages with nix-fast-build ──────
-echo "[$(date)] Regenerating bioc_list.nix..."
+echo "[$(date)] Regenerating package lists..."
 Rscript "$DIR/gen_packages.R"
 
 echo "[$(date)] Running nix-fast-build to build all individual packages..."
+RUN_STARTED_AT="$(date -u '+%Y-%m-%dT%H:%M:%S+00:00')"
 nix run .#nix-fast-build -- \
   --file "$EXPR" \
   -A rPackagesSet \
@@ -42,7 +44,7 @@ else
   echo "[$(date)] No active local store paths detected. Attic cache is already up-to-date!"
 fi
 
-python3 "$DIR/summarize-results.py" "$RESULTS_JSON"
+python3 "$DIR/summarize-results.py" "$RESULTS_JSON" "$RUN_STARTED_AT" "$ATTIC_DB"
 
 # ── 4. Clean up ───────────────────────────────────────────────────────────────
 rm -f "$BUILT_PATHS_FILE" "$RESULTS_JSON"

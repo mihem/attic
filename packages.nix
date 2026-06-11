@@ -7,8 +7,15 @@ let
   pkgs = import (fetchTarball "https://github.com/rstats-on-nix/nixpkgs/archive/2026-05-18.tar.gz") { config = { allowBroken = true; }; };
 
   bioc_names = import ./bioc_list.nix;
-  valid_bioc_names = builtins.filter (name: builtins.hasAttr name pkgs.rPackages) bioc_names;
-  bioc_pkgs  = builtins.map (name: pkgs.rPackages.${name}) valid_bioc_names;
+  cran_names = import ./cran_list.nix;
+
+  unique = names: builtins.attrNames (builtins.listToAttrs (builtins.map (name: {
+    inherit name;
+    value = true;
+  }) names));
+
+  valid_r_names = builtins.filter (name: builtins.hasAttr name pkgs.rPackages) (unique (bioc_names ++ cran_names));
+  generated_r_pkgs = builtins.map (name: pkgs.rPackages.${name}) valid_r_names;
 
   rpkgs = builtins.attrValues {
     inherit (pkgs.rPackages)
@@ -41,7 +48,7 @@ let
     inherit (pkgs) chromium glibcLocales nix pandoc R;
   };
 
-  allR = [ BPCells ] ++ rpkgs ++ bioc_pkgs;
+  allR = [ BPCells ] ++ rpkgs ++ generated_r_pkgs;
 
   # Expose individual R packages as an attribute set so nix-fast-build can evaluate and build them individually.
   rPackagesSet = builtins.listToAttrs (builtins.map (pkg: {
