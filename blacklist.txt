@@ -361,3 +361,6 @@ waddR
 waveTiling
 xps
 yaqcaffy
+
+# Automatically blacklisted due to build/eval failures
+hdf5r
