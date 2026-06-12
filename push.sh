@@ -46,6 +46,14 @@ fi
 
 python3 "$DIR/summarize-results.py" "$RESULTS_JSON" "$RUN_STARTED_AT" "$ATTIC_DB"
 
+echo "[$(date)] Clearing stored Attic object signatures..."
+sudo sqlite3 "$ATTIC_DB" "
+  select count(*) || ' stored signatures before cleanup' from object where sigs != '[]';
+  update object set sigs = '[]' where sigs != '[]';
+  select changes() || ' stored signatures cleared';
+  select count(*) || ' stored signatures after cleanup' from object where sigs != '[]';
+"
+
 # ── 4. Clean up ───────────────────────────────────────────────────────────────
 rm -f "$BUILT_PATHS_FILE" "$RESULTS_JSON"
 echo "[$(date)] Done."
