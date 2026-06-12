@@ -364,3 +364,32 @@ yaqcaffy
 
 # Automatically blacklisted due to build/eval failures
 hdf5r
+
+# Automatically blacklisted due to build/eval failures
+RMark
+ROracle
+RProtoBuf
+Rblpapi
+RcppPlanc
+a5R
+acumos
+av
+bcp
+doMPI
+hdf5r.Extra
+libopenexr
+lidR
+maptools
+metan
+poolr
+propagate
+prospectr
+prqlr
+pryr
+qs
+ravecore
+rjd3toolkit
+rlas
+rliger
+survivalsvm
+tiledb
