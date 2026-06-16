@@ -3,6 +3,8 @@ set -euo pipefail
 
 CACHE="r-packages"
 ATTIC_DB="/var/lib/attic/server.db"
+MAX_JOBS="${MAX_JOBS:-6}"
+BUILD_CORES="${BUILD_CORES:-1}"
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EXPR="$DIR/packages.nix"
 LOGDIR="$DIR/logs"
@@ -14,6 +16,8 @@ mkdir -p "$LOGDIR"
 # Filter out annoying and harmless Nix warnings (e.g. unknown settings) from the output in real-time
 exec > >(grep --line-buffered -v "unknown setting" | tee -a "$LOG") 2>&1
 
+echo "[$(date)] Build limits: max_jobs=$MAX_JOBS build_cores=$BUILD_CORES"
+
 ## ── 1. Build individual packages with nix-fast-build ──────
 echo "[$(date)] Regenerating package lists..."
 Rscript "$DIR/gen_packages.R"
@@ -23,6 +27,8 @@ RUN_STARTED_AT="$(date -u '+%Y-%m-%dT%H:%M:%S+00:00')"
 nix run .#nix-fast-build -- \
   --file "$EXPR" \
   -A rPackagesSet \
+  --max-jobs "$MAX_JOBS" \
+  --option cores "$BUILD_CORES" \
   --result-file "$RESULTS_JSON" \
   --no-link \
   --skip-cached \
@@ -49,6 +55,7 @@ python3 "$DIR/summarize-results.py" "$RESULTS_JSON" "$RUN_STARTED_AT" "$ATTIC_DB
 echo "[$(date)] Clearing stored Attic object signatures..."
 sudo sqlite3 "$ATTIC_DB" "
   select count(*) || ' stored signatures before cleanup' from object where sigs != '[]';
+  select store_path from object where sigs != '[]' order by store_path;
   update object set sigs = '[]' where sigs != '[]';
   select changes() || ' stored signatures cleared';
   select count(*) || ' stored signatures after cleanup' from object where sigs != '[]';
