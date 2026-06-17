@@ -50,7 +50,23 @@ else
   echo "[$(date)] No active local store paths detected. Attic cache is already up-to-date!"
 fi
 
-python3 "$DIR/summarize-results.py" "$RESULTS_JSON" "$RUN_STARTED_AT" "$ATTIC_DB"
+python3 "$DIR/summarize-results.py" "$RESULTS_JSON"
+
+echo "Attic growth since run start:"
+sudo sqlite3 -readonly "$ATTIC_DB" "
+  select '  Attic newly uploaded paths: ' || count(*)
+    from nar
+    where created_at >= '$RUN_STARTED_AT';
+  select '  Attic newly uploaded logical size: ' || printf('%.2f GiB', coalesce(sum(nar_size), 0) / 1024.0 / 1024 / 1024)
+    from nar
+    where created_at >= '$RUN_STARTED_AT';
+  select '  Attic newly stored chunks: ' || count(*)
+    from chunk
+    where created_at >= '$RUN_STARTED_AT';
+  select '  Attic newly stored size: ' || printf('%.2f GiB', coalesce(sum(file_size), 0) / 1024.0 / 1024 / 1024)
+    from chunk
+    where created_at >= '$RUN_STARTED_AT';
+"
 
 echo "[$(date)] Clearing stored Attic object signatures..."
 sudo sqlite3 "$ATTIC_DB" "
