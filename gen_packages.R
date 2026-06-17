@@ -7,7 +7,7 @@
 # only package names (or full-line comments).
 
 bioc_n <- Inf
-cran_n <- 5000
+cran_n <- 10000
 
 write_nix_list <- function(packages, out_path) {
   nix_names <- gsub("\\.", "_", packages)
