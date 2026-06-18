@@ -1,30 +1,35 @@
 # packages.nix
-# Uses pkgs.buildEnv instead of mkShell to avoid ARG_MAX with 1000+ packages.
-# buildEnv creates a symlink farm internally, without passing the list to any
-# shell command line.  push.sh simply builds the 'rEnv' attribute.
+# Exposes every non-blacklisted derivation in rstats-on-nix pkgs.rPackages as
+# rPackagesSet so nix-fast-build can build and push packages individually.
 
 let
-  pkgs = import (fetchTarball "https://github.com/rstats-on-nix/nixpkgs/archive/2026-05-18.tar.gz") { config = { allowBroken = true; }; };
+  rNixpkgsDate = let
+    value = builtins.getEnv "R_NIXPKGS_DATE";
+  in if value == "" then "2026-05-18" else value;
 
-  bioc_names = import ./bioc_list.nix;
-  cran_names = import ./cran_list.nix;
+  pkgs = import (fetchTarball "https://github.com/rstats-on-nix/nixpkgs/archive/${rNixpkgsDate}.tar.gz") { config = { allowBroken = true; }; };
+
+  isDerivation = value: builtins.isAttrs value && value ? type && value.type == "derivation";
+
+  blacklistLines = builtins.filter (line: line != "" && builtins.substring 0 1 line != "#") (
+    builtins.filter builtins.isString (builtins.split "\n" (builtins.readFile ./blacklist.txt))
+  );
+
+  blacklistNames = builtins.map (name:
+    let
+      nixName = builtins.replaceStrings [ "." ] [ "_" ] name;
+    in if nixName == "import" then "r_import" else nixName
+  ) blacklistLines;
 
   unique = names: builtins.attrNames (builtins.listToAttrs (builtins.map (name: {
     inherit name;
     value = true;
   }) names));
 
-  valid_r_names = builtins.filter (name: builtins.hasAttr name pkgs.rPackages) (unique (bioc_names ++ cran_names));
+  valid_r_names = builtins.filter (name:
+    isDerivation pkgs.rPackages.${name} && !(builtins.elem name blacklistNames)
+  ) (unique (builtins.attrNames pkgs.rPackages));
   generated_r_pkgs = builtins.map (name: pkgs.rPackages.${name}) valid_r_names;
-
-  rpkgs = builtins.attrValues {
-    inherit (pkgs.rPackages)
-      ape biomaRt colourpicker devtools dplyr DT formattable future_apply
-      ggplot2 glue GSVA HDF5Array httr igraph Matrix msigdbr pbapply pkgdown
-      plotly qvalue R6 readr rlang scales Seurat SeuratObject shiny
-      shinycssloaders shinydashboard shinyFiles shinyjs shinytest2
-      shinyvalidate shinyWidgets stringr testthat tibble tidyr tidyselect viridis;
-  };
 
   BPCells-src = pkgs.fetchgit {
     url = "https://github.com/bnprks/BPCells";
@@ -44,11 +49,7 @@ let
     };
   };
 
-  system_packages = builtins.attrValues {
-    inherit (pkgs) chromium glibcLocales nix pandoc R;
-  };
-
-  allR = [ BPCells ] ++ rpkgs ++ generated_r_pkgs;
+  allR = [ BPCells ] ++ generated_r_pkgs;
 
   # Expose individual R packages as an attribute set so nix-fast-build can evaluate and build them individually.
   rPackagesSet = builtins.listToAttrs (builtins.map (pkg: {
@@ -56,14 +57,5 @@ let
     value = pkg;
   }) allR);
 
-  # Build a single combined environment (symlink farm) containing everything.
-  # buildEnv handles 1000+ packages without ARG_MAX because it doesn't pass
-  # the list to any shell command.
-  rEnv = pkgs.buildEnv {
-    name = "r-bioc-env";
-    paths = allR ++ system_packages;
-    # Prevent collisions from overwriting files (keep first occurrence)
-    ignoreCollisions = true;
-  };
 in
-  { inherit pkgs rEnv rPackagesSet; }
+  { inherit pkgs rPackagesSet; }

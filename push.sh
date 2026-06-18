@@ -3,6 +3,7 @@ set -euo pipefail
 
 CACHE="r-packages"
 ATTIC_DB="/var/lib/attic/server.db"
+export R_NIXPKGS_DATE="${R_NIXPKGS_DATE:-2026-05-18}"
 MAX_JOBS="${MAX_JOBS:-6}"
 BUILD_CORES="${BUILD_CORES:-1}"
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -16,12 +17,10 @@ mkdir -p "$LOGDIR"
 # Filter out annoying and harmless Nix warnings (e.g. unknown settings) from the output in real-time
 exec > >(grep --line-buffered -v "unknown setting" | tee -a "$LOG") 2>&1
 
+echo "[$(date)] Source date: R_NIXPKGS_DATE=$R_NIXPKGS_DATE"
 echo "[$(date)] Build limits: max_jobs=$MAX_JOBS build_cores=$BUILD_CORES"
 
 ## ── 1. Build individual packages with nix-fast-build ──────
-echo "[$(date)] Regenerating package lists..."
-Rscript "$DIR/gen_packages.R"
-
 echo "[$(date)] Running nix-fast-build to build all individual packages..."
 RUN_STARTED_AT="$(date -u '+%Y-%m-%dT%H:%M:%S+00:00')"
 nix run .#nix-fast-build -- \
@@ -38,9 +37,6 @@ nix run .#nix-fast-build -- \
 # ── 2. Run update-blacklist and output built paths ───────────────────────────
 echo "[$(date)] Updating blacklist and finding active local paths..."
 python3 "$DIR/update-blacklist.py" "$RESULTS_JSON" "$DIR/blacklist.txt" "$BUILT_PATHS_FILE"
-
-echo "[$(date)] Re-regenerating bioc_list.nix with updated blacklist..."
-Rscript "$DIR/gen_packages.R"
 
 # ── 3. Report successful local paths and upload/build summary ────────────────
 if [ -s "$BUILT_PATHS_FILE" ]; then
