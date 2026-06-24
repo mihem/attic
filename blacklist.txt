@@ -1,6 +1,6 @@
 # Packages that fail to build or evaluate in nixpkgs.
 # One R/Bioc package name per line. Lines starting with # are comments.
-# This file is read by gen_packages.R and maintained by update-blacklist.py.
+# This file is read by packages.nix and maintained by update-blacklist.py.
 # marked broken in nixpkgs (meta.broken = true)
 zlibbioc
 interactiveDisplayBase
@@ -1268,3 +1268,26 @@ xtensor
 yri1kgv
 zonator
 zoon
+
+# Automatically blacklisted due to build/eval failures
+LinearDetect
+MAAPER
+MAFDash
+MAQCsubsetILM
+UMR
+UPMASK
+UScancer
+UScensus2000cdp
+UScensus2000tract
+UScensus2010
+VARDetect
+VARsignR
+dsQTL
+dsdp
+dsfa
+dsmSearch
+kmcudaR
+kmeRtone
+kmlShape
+kolmim
+kwb.hantush
