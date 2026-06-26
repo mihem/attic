@@ -56,9 +56,9 @@ Then rebuild NixOS:
 sudo nixos-rebuild switch
 ```
 
-## Use With Nix Or nixpkgs
+## Use On Non-NixOS Systems
 
-For a single user or non-NixOS machine, add this to `~/.config/nix/nix.conf`:
+For a regular Nix installation on Linux, add this to `~/.config/nix/nix.conf`:
 
 ```text
 extra-substituters = https://osmzhlab.uni-muenster.de:4949/r-packages
@@ -97,13 +97,14 @@ builds/uploads only paths missing from `r-packages`.
 
 Two implementation details are important for speed:
 
-- Builds and uploads are handled directly by
-  [`nix-fast-build`](https://github.com/Mic92/nix-fast-build) via
-  `--attic-cache r-packages`. There is no separate manual `attic push` step in
-  the normal workflow, so cache checking, building, and uploading stay in one
-  pass.
-- Attic chunking is configured for weekly R/Bioconductor updates, where many
-  large package outputs are similar but not byte-identical across dates.
+1. Use [`nix-fast-build`](https://github.com/Mic92/nix-fast-build) for parallel
+   evaluation/building and direct Attic upload.
+2. Optimize Attic chunk size for weekly R/Bioconductor deltas, where many large
+   package outputs are similar but not byte-identical across dates.
+
+The workflow uses `nix-fast-build --attic-cache r-packages`. There is no separate
+manual `attic push` step in the normal workflow, so cache checking, building, and
+uploading stay in one pass.
 
 Large date jumps can invalidate most store paths. For those cases the workflow
 runs in batches and only runs garbage collection if free disk space drops below
