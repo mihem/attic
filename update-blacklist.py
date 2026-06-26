@@ -51,24 +51,16 @@ def main():
 
     # 1. Update Blacklist
     if failed_packages:
-        # Read existing blacklist to avoid duplicates
         existing_blacklist = set()
         if os.path.exists(blacklist_path):
             with open(blacklist_path, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith('#'):
-                        # Strip any comment suffix from line (e.g. after spaces or #)
-                        pkg = line.split('#')[0].strip()
-                        if pkg:
-                            existing_blacklist.add(pkg)
+                existing_blacklist = {line.strip() for line in f if line.strip()}
 
         new_failures = sorted(list(failed_packages - existing_blacklist))
 
         if new_failures:
             print(f"Adding {len(new_failures)} newly failed packages to blacklist:")
             with open(blacklist_path, 'a') as f:
-                f.write("\n# Automatically blacklisted due to build/eval failures\n")
                 for pkg in new_failures:
                     print(f"  -> blacklisted: {pkg}")
                     f.write(f"{pkg}\n")

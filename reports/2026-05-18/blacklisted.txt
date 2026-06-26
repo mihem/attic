@@ -1252,15 +1252,3 @@ kmeRtone
 kmlShape
 kolmim
 kwb.hantush
-Hiiragi2013
-IHW
-IHWpaper
-RFIF
-ideal
-impARI
-lpsymphony
-maxEff
-pairscale
-scp
-statuser
-wjake
