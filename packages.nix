@@ -11,8 +11,12 @@ let
 
   isDerivation = value: builtins.isAttrs value && value ? type && value.type == "derivation";
 
-  blacklistLines = builtins.filter (line: line != "" && builtins.substring 0 1 line != "#") (
-    builtins.filter builtins.isString (builtins.split "\n" (builtins.readFile ./blacklist.txt))
+  blacklistFile = let
+    value = builtins.getEnv "BLACKLIST_FILE";
+  in if value == "" then ./blacklist.txt else value;
+
+  blacklistLines = builtins.filter (line: line != "") (
+    builtins.filter builtins.isString (builtins.split "\n" (builtins.readFile blacklistFile))
   );
 
   blacklistNames = builtins.map (name:

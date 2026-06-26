@@ -1,7 +1,3 @@
-# Packages that fail to build or evaluate in nixpkgs.
-# One R/Bioc package name per line. Lines starting with # are comments.
-# This file is read by packages.nix and maintained by update-blacklist.py.
-# marked broken in nixpkgs (meta.broken = true)
 zlibbioc
 interactiveDisplayBase
 RcisTarget
@@ -34,7 +30,6 @@ supraHex
 TransView
 BulkSignalR
 MetaNeighbor
-# build-time failures (C API changes, lazy loading errors, etc.)
 HiveR
 MoonlightR
 SharedObject
@@ -46,8 +41,6 @@ SingleCellSignalR
 CONFESS
 GOfuncR
 geneXtendeR
-
-# Automatically blacklisted due to build/eval failures
 AneuFinder
 BAGS
 BitSeq
@@ -86,12 +79,8 @@ rRDP
 rqubic
 snapCGH
 synapter
-
-# Automatically blacklisted due to build/eval failures
 NewWave
 Rtreemix
-
-# Automatically blacklisted due to build/eval failures
 ABAEnrichment
 ASpediaFI
 AffyCompatible
@@ -361,11 +350,7 @@ waddR
 waveTiling
 xps
 yaqcaffy
-
-# Automatically blacklisted due to build/eval failures
 hdf5r
-
-# Automatically blacklisted due to build/eval failures
 RMark
 ROracle
 RProtoBuf
@@ -393,8 +378,6 @@ rlas
 rliger
 survivalsvm
 tiledb
-
-# Automatically blacklisted due to build/eval failures
 BinaryDosage
 FORTLS
 GapAnalysis
@@ -443,8 +426,6 @@ vol2birdR
 waves
 whisper
 yrnd
-
-# Automatically blacklisted due to build/eval failures
 BlockMissingData
 FKF.SP
 GOCompare
@@ -489,8 +470,6 @@ uuidx
 vectra
 vmeasur
 wcvpmatch
-
-# Automatically blacklisted due to build/eval failures
 BayesPET
 BioTrajectory
 GeneralizedUmatrixGPU
@@ -516,8 +495,6 @@ robust2sls
 spatialGE
 vegdata
 vostokR
-
-# Automatically blacklisted due to build/eval failures
 ADMMnet
 AGread
 APML0
@@ -632,8 +609,6 @@ LRBase.Ssc.eg.db
 LRBase.Xtr.eg.db
 LavaCvxr
 LiblineaR.ACF
-
-# Automatically blacklisted due to build/eval failures
 MEDITS
 MIGSAdata
 MLModelSelection
@@ -823,8 +798,6 @@ TimerQuant
 ToxicR
 TrajDataMining
 TwoPhaseInd
-
-# Automatically blacklisted due to build/eval failures
 VecStatGraphs3D
 VectrixDB
 Watersheds
@@ -920,8 +893,6 @@ dna
 doblin
 downscaledl
 drmdel
-
-# Automatically blacklisted due to build/eval failures
 durmod
 dynamicGraph
 dynatopmodel
@@ -1053,8 +1024,6 @@ ipptoolbox
 iriR
 jstor
 kdpee
-
-# Automatically blacklisted due to build/eval failures
 landmap
 landsat8
 landscapetools
@@ -1131,12 +1100,8 @@ plasFIA
 polyglot
 popRF
 postGIStools
-
-# Automatically blacklisted due to build/eval failures
 precondition
 presser
-
-# Automatically blacklisted due to build/eval failures
 propr
 psda
 psyosphere
@@ -1236,8 +1201,6 @@ tReeTraits
 table1xls
 targetscan.Hs.eg.db
 targetscan.Mm.eg.db
-
-# Automatically blacklisted due to build/eval failures
 tidycode
 timsr
 topmodel
@@ -1268,8 +1231,6 @@ xtensor
 yri1kgv
 zonator
 zoon
-
-# Automatically blacklisted due to build/eval failures
 LinearDetect
 MAAPER
 MAFDash
@@ -1291,3 +1252,15 @@ kmeRtone
 kmlShape
 kolmim
 kwb.hantush
+Hiiragi2013
+IHW
+IHWpaper
+RFIF
+ideal
+impARI
+lpsymphony
+maxEff
+pairscale
+scp
+statuser
+wjake
