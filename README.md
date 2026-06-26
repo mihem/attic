@@ -95,10 +95,15 @@ It evaluates all non-blacklisted `pkgs.rPackages` derivations for the selected
 `R_NIXPKGS_DATE`, checks the Attic database for already cached store paths, and
 builds/uploads only paths missing from `r-packages`.
 
-Builds and uploads are handled by
-[`nix-fast-build`](https://github.com/Mic92/nix-fast-build) via
-`--attic-cache r-packages`. There is no separate manual `attic push` step in the
-normal workflow.
+Two implementation details are important for speed:
+
+- Builds and uploads are handled directly by
+  [`nix-fast-build`](https://github.com/Mic92/nix-fast-build) via
+  `--attic-cache r-packages`. There is no separate manual `attic push` step in
+  the normal workflow, so cache checking, building, and uploading stay in one
+  pass.
+- Attic chunking is configured for weekly R/Bioconductor updates, where many
+  large package outputs are similar but not byte-identical across dates.
 
 Large date jumps can invalidate most store paths. For those cases the workflow
 runs in batches and only runs garbage collection if free disk space drops below
@@ -133,16 +138,25 @@ Benchmark setup:
 |---|---|
 | Packages | 50 real Bioconductor outputs |
 | Sample size | 952 MiB logical package-output content |
-| Test | push `v1`, then push slightly modified `v2` into the same temporary cache |
-| Measurement | additional chunks/storage after pushing modified `v2` |
+| Test | push `v1`, then push a slightly modified `v2` of the same outputs into the same temporary cache |
+| Measurement | additional chunks/storage needed for `v2` after `v1` already exists |
 
-Relevant benchmark result:
+Here `v1` and `v2` are not two full weekly cache runs. They are a controlled
+weekly-delta simulation: first upload a representative package-output set, then
+upload a slightly changed version of those same outputs. This isolates the part
+that matters for weekly updates: how much new storage Attic needs when package
+outputs change but still share most content with the previous date.
+
+Relevant benchmark results:
 
 | Preset | NAR threshold | Avg chunk | v1 time | v1 chunks | v1 stored | v2 time | v2 new chunks | v2 stored | v2 saving vs no chunking |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | No chunking | disabled | disabled | 7s | 50 | 951 MiB | 7s | 50 | 957 MiB | baseline |
-| Current setting | 8 MiB | 1 MiB | 23s | 764 | 942 MiB | 12s | 159 | 258 MiB | 73.0% |
+| Aggressive chunking (`th128k-512k`) | 128 KiB | 512 KiB | 47s | 1657 | 935 MiB | 10s | 213 | 142 MiB | 85.2% |
+| Current setting (`th8-1m`) | 8 MiB | 1 MiB | 23s | 764 | 942 MiB | 12s | 159 | 258 MiB | 73.0% |
 
-So for weekly-style updates in this benchmark, the selected chunking reduced the
-newly stored `v2` data from `957 MiB` to `258 MiB`, while keeping first-upload
-chunk count much lower than more aggressive `512 KiB` chunk settings.
+The aggressive `128 KiB / 512 KiB` setting saved the most weekly-delta storage,
+but it more than doubled first-upload chunk count compared with the current
+setting. For this cache, the selected `8 MiB / 1 MiB` setting is the operational
+compromise: large weekly storage savings, fewer SQLite/NFS objects, and faster
+first uploads.
