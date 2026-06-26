@@ -161,4 +161,7 @@ while true; do
   batch=$((batch + 1))
 done
 
+echo "[$(date)] Writing report for $R_NIXPKGS_DATE..."
+python3 "$DIR/report-date.py" "$R_NIXPKGS_DATE" --blacklist "$DIR/blacklist.txt" --cache "$CACHE" --attic-db "$ATTIC_DB" --nix "$NIX"
+
 echo "[$(date)] Done."
