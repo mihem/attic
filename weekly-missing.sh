@@ -5,6 +5,7 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$DIR"
 
 CACHE="${CACHE:-r-packages}"
+CACHE_URL="${CACHE_URL:-https://osmzhlab.uni-muenster.de:4949/r-packages}"
 ATTIC_DB="${ATTIC_DB:-/var/lib/attic/server.db}"
 NIX="${NIX:-/nix/var/nix/profiles/default/bin/nix}"
 NIX_STORE="${NIX_STORE:-/nix/var/nix/profiles/default/bin/nix-store}"
@@ -20,6 +21,7 @@ DRY_RUN="${DRY_RUN:-0}"
 LOGDIR="$DIR/logs"
 LOG="$LOGDIR/weekly-missing-$(date +%Y-%m-%d_%H%M%S).log"
 TMPDIR="$(mktemp -d "$DIR/.weekly-missing.XXXXXX")"
+NIX_CONF_DIR="$TMPDIR/nix-conf"
 OUTPATHS_JSON="$TMPDIR/outpaths.json"
 MISSING_NAMES="$TMPDIR/missing-packages.txt"
 BATCH_NAMES="$TMPDIR/batch-packages.txt"
@@ -27,13 +29,22 @@ MISSING_NIX="$TMPDIR/missing-packages.nix"
 RESULTS_JSON="$TMPDIR/results.json"
 BUILT_PATHS="$TMPDIR/built-paths.txt"
 
-mkdir -p "$LOGDIR"
+mkdir -p "$LOGDIR" "$NIX_CONF_DIR"
+cat > "$NIX_CONF_DIR/nix.conf" <<NIXCONF
+experimental-features = nix-command flakes
+extra-substituters = $CACHE_URL
+extra-trusted-public-keys = r-packages:Op7Q3XME8az4XNcP1clupGw4ZbuaguBw+sUziweqpTY=
+narinfo-cache-negative-ttl = 0
+NIXCONF
+export NIX_CONF_DIR
+
 exec > >(tee -a "$LOG") 2>&1
 
 cleanup() {
   rm -rf "$TMPDIR"
 }
 trap cleanup EXIT
+trap 'cleanup; exit 130' INT TERM
 
 free_gb() {
   df -BG / | awk 'NR == 2 { sub(/G/, "", $4); print $4 }'
@@ -129,7 +140,7 @@ build_batch() {
 }
 
 echo "[$(date)] Weekly missing-package run"
-echo "R_NIXPKGS_DATE=$R_NIXPKGS_DATE CACHE=$CACHE ATTIC_DB=$ATTIC_DB"
+echo "R_NIXPKGS_DATE=$R_NIXPKGS_DATE CACHE=$CACHE CACHE_URL=$CACHE_URL ATTIC_DB=$ATTIC_DB"
 echo "MAX_JOBS=$MAX_JOBS BUILD_CORES=$BUILD_CORES DRY_RUN=$DRY_RUN"
 echo "BATCH_SIZE=$BATCH_SIZE MAX_BATCHES=$MAX_BATCHES RUN_GC=$RUN_GC MIN_FREE_GB=$MIN_FREE_GB"
 echo "free disk at start: $(free_gb) GiB"
@@ -161,7 +172,11 @@ while true; do
   batch=$((batch + 1))
 done
 
-echo "[$(date)] Writing report for $R_NIXPKGS_DATE..."
-python3 "$DIR/report-date.py" "$R_NIXPKGS_DATE" --blacklist "$DIR/blacklist.txt" --cache "$CACHE" --attic-db "$ATTIC_DB" --nix "$NIX"
+if [ "$DRY_RUN" = "1" ]; then
+  echo "[$(date)] Dry run; not writing report."
+else
+  echo "[$(date)] Writing report for $R_NIXPKGS_DATE..."
+  python3 "$DIR/report-date.py" "$R_NIXPKGS_DATE" --blacklist "$DIR/blacklist.txt" --cache "$CACHE" --attic-db "$ATTIC_DB" --nix "$NIX"
+fi
 
 echo "[$(date)] Done."
