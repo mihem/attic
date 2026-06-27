@@ -21,6 +21,19 @@ Public key:
 r-packages:Op7Q3XME8az4XNcP1clupGw4ZbuaguBw+sUziweqpTY=
 ```
 
+## What Is Covered
+
+The cache targets `x86_64-linux` only. It does not provide binaries for
+macOS/Darwin systems such as `aarch64-darwin`.
+
+The cache contains binaries for ~ `32,000`
+evaluated R package outputs. Another ~`1,300` packages are blacklisted because
+they failed to build or evaluate for the package set used here.
+
+Exact coverage by date is listed in [`reports/`](reports/). The numbers can change
+between weekly `R_NIXPKGS_DATE` snapshots because nixpkgs package availability
+and build failures change over time.
+
 ## Reports
 
 Per-date package availability reports are written to [`reports/`](reports/).
