@@ -17,6 +17,7 @@ MAX_BATCHES="${MAX_BATCHES:-0}"
 MIN_FREE_GB="${MIN_FREE_GB:-300}"
 RUN_GC="${RUN_GC:-auto}"
 DRY_RUN="${DRY_RUN:-0}"
+NO_PROGRESS_LIMIT="${NO_PROGRESS_LIMIT:-3}"
 
 LOGDIR="$DIR/logs"
 LOG="$LOGDIR/weekly-missing-$(date +%Y-%m-%d_%H%M%S).log"
@@ -28,6 +29,7 @@ BATCH_NAMES="$TMPDIR/batch-packages.txt"
 MISSING_NIX="$TMPDIR/missing-packages.nix"
 RESULTS_JSON="$TMPDIR/results.json"
 BUILT_PATHS="$TMPDIR/built-paths.txt"
+PREV_MISSING_NAMES="$TMPDIR/previous-missing-packages.txt"
 
 mkdir -p "$LOGDIR" "$NIX_CONF_DIR"
 cat > "$NIX_CONF_DIR/nix.conf" <<NIXCONF
@@ -127,6 +129,7 @@ build_batch() {
     --no-link \
     --skip-cached \
     --attic-cache "$CACHE" \
+    --attic-ignore-upstream-cache-filter \
     --no-nom
   status="$?"
   set -e
@@ -142,16 +145,30 @@ build_batch() {
 echo "[$(date)] Weekly missing-package run"
 echo "R_NIXPKGS_DATE=$R_NIXPKGS_DATE CACHE=$CACHE CACHE_URL=$CACHE_URL ATTIC_DB=$ATTIC_DB"
 echo "MAX_JOBS=$MAX_JOBS BUILD_CORES=$BUILD_CORES DRY_RUN=$DRY_RUN"
-echo "BATCH_SIZE=$BATCH_SIZE MAX_BATCHES=$MAX_BATCHES RUN_GC=$RUN_GC MIN_FREE_GB=$MIN_FREE_GB"
+echo "BATCH_SIZE=$BATCH_SIZE MAX_BATCHES=$MAX_BATCHES RUN_GC=$RUN_GC MIN_FREE_GB=$MIN_FREE_GB NO_PROGRESS_LIMIT=$NO_PROGRESS_LIMIT"
 echo "free disk at start: $(free_gb) GiB"
 
 batch=1
+no_progress=0
 while true; do
   check_missing
   missing_count="$(line_count "$MISSING_NAMES")"
 
+  if [ -f "$PREV_MISSING_NAMES" ] && cmp -s "$MISSING_NAMES" "$PREV_MISSING_NAMES"; then
+    no_progress=$((no_progress + 1))
+    echo "[$(date)] Missing set unchanged for $no_progress consecutive check(s)."
+  else
+    no_progress=0
+    cp "$MISSING_NAMES" "$PREV_MISSING_NAMES"
+  fi
+
   if [ "$missing_count" -eq 0 ]; then
     echo "[$(date)] Nothing to build."
+    break
+  fi
+
+  if [ "$DRY_RUN" != "1" ] && [ "$NO_PROGRESS_LIMIT" -gt 0 ] && [ "$no_progress" -ge "$NO_PROGRESS_LIMIT" ]; then
+    echo "[$(date)] Missing set did not shrink after $NO_PROGRESS_LIMIT retries; stopping to avoid an infinite loop."
     break
   fi
 
