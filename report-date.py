@@ -61,7 +61,6 @@ def write_lines(path, lines):
     Path(path).write_text("\n".join(lines) + ("\n" if lines else ""))
 
 
-
 def update_index(reports_dir):
     reports_path = Path(reports_dir)
     summaries = []
@@ -79,11 +78,14 @@ def update_index(reports_dir):
         lines.append(
             f"| [`{date}`]({date}/) | {item['total_evaluated']} | {item['available']} | {item['missing']} | {item['blacklisted']} |"
         )
-    lines.extend([
-        "",
-        "Each date directory contains `available.txt`, `available-store-paths.tsv`, `missing.txt`, `blacklisted.txt`, and `summary.json`.",
-    ])
+    lines.extend(
+        [
+            "",
+            "Each date directory contains `available.txt`, `available-store-paths.tsv`, `missing.txt`, `blacklisted.txt`, and `summary.json`.",
+        ]
+    )
     (reports_path / "README.md").write_text("\n".join(lines) + "\n")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Write per-date Attic cache reports.")
@@ -126,7 +128,9 @@ def main():
         "missing": len(missing),
         "blacklisted": len(blacklist),
     }
-    (out_dir / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
+    (out_dir / "summary.json").write_text(
+        json.dumps(summary, indent=2, sort_keys=True) + "\n"
+    )
 
     readme = f"""# r-packages cache report: {args.date}
 

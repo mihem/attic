@@ -15,7 +15,9 @@ BPCELLS_ARCHIVE_URL = "https://github.com/bnprks/BPCells/archive/{rev}.tar.gz"
 
 def latest_rix_date():
     with urlopen(RIX_DATES_URL, timeout=60) as response:
-        rows = list(csv.DictReader(line.decode("utf-8") for line in response.readlines()))
+        rows = list(
+            csv.DictReader(line.decode("utf-8") for line in response.readlines())
+        )
     if not rows or "date" not in rows[-1]:
         raise RuntimeError("could not read latest rix date")
     return rows[-1]["date"]
@@ -24,7 +26,10 @@ def latest_rix_date():
 def latest_bpcells_rev():
     request = Request(
         BPCELLS_COMMIT_URL,
-        headers={"Accept": "application/vnd.github+json", "User-Agent": "attic-weekly-missing"},
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "attic-weekly-missing",
+        },
     )
     with urlopen(request, timeout=60) as response:
         data = json.load(response)
@@ -68,7 +73,9 @@ def main():
 
     r_nixpkgs_date = args.r_nixpkgs_date or latest_rix_date()
     bp_cells_rev = args.bp_cells_rev or latest_bpcells_rev()
-    bp_cells_sha256 = args.bp_cells_sha256 or prefetch_bpcells_sha256(args.nix, bp_cells_rev)
+    bp_cells_sha256 = args.bp_cells_sha256 or prefetch_bpcells_sha256(
+        args.nix, bp_cells_rev
+    )
 
     print(shell_assign("R_NIXPKGS_DATE", r_nixpkgs_date))
     print(shell_assign("BP_CELLS_REV", bp_cells_rev))

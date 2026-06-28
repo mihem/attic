@@ -70,7 +70,7 @@ def main():
         print(f"Error: Results file {results_path} not found.")
         sys.exit(1)
 
-    with open(results_path, 'r') as f:
+    with open(results_path, "r") as f:
         data = json.load(f)
 
     build_successes = set()
@@ -79,20 +79,20 @@ def main():
     upload_failures = set()
     other_failures = set()
 
-    for r in data.get('results', []):
-        attr = clean_attr(r.get('attr'))
+    for r in data.get("results", []):
+        attr = clean_attr(r.get("attr"))
         if not attr:
             continue
 
-        result_type = r.get('type')
-        success = r.get('success', False)
+        result_type = r.get("type")
+        success = r.get("success", False)
 
-        if result_type == 'BUILD':
+        if result_type == "BUILD":
             if success:
                 build_successes.add(attr)
             else:
                 build_failures.add(attr)
-        elif result_type == 'ATTIC':
+        elif result_type == "ATTIC":
             if success:
                 upload_successes.add(attr)
             else:
@@ -114,7 +114,9 @@ def main():
 
     if growth is not None:
         print(f"  Attic newly uploaded paths: {growth['nar_count']}")
-        print(f"  Attic newly uploaded logical size: {format_bytes(growth['nar_logical'])}")
+        print(
+            f"  Attic newly uploaded logical size: {format_bytes(growth['nar_logical'])}"
+        )
         print(f"  Attic newly stored chunks: {growth['chunk_count']}")
         print(f"  Attic newly stored size: {format_bytes(growth['stored_bytes'])}")
     if other_failures:
@@ -131,5 +133,5 @@ def main():
             print(f"    - {attr}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
