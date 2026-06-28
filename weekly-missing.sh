@@ -9,7 +9,9 @@ CACHE_URL="${CACHE_URL:-https://osmzhlab.uni-muenster.de:4949/r-packages}"
 ATTIC_DB="${ATTIC_DB:-/var/lib/attic/server.db}"
 NIX="${NIX:-/nix/var/nix/profiles/default/bin/nix}"
 NIX_STORE="${NIX_STORE:-/nix/var/nix/profiles/default/bin/nix-store}"
-R_NIXPKGS_DATE="${R_NIXPKGS_DATE:-2026-05-25}"
+R_NIXPKGS_DATE="${R_NIXPKGS_DATE:-}"
+BP_CELLS_REV="${BP_CELLS_REV:-}"
+BP_CELLS_SHA256="${BP_CELLS_SHA256:-}"
 MAX_JOBS="${MAX_JOBS:-6}"
 BUILD_CORES="${BUILD_CORES:-1}"
 BATCH_SIZE="${BATCH_SIZE:-5000}"
@@ -59,6 +61,17 @@ from pathlib import Path
 path = Path(sys.argv[1])
 print(sum(1 for line in path.read_text().splitlines() if line.strip()))
 PY
+}
+
+resolve_weekly_inputs() {
+  echo "[$(date)] Resolving weekly input pins..."
+  resolved_inputs="$(python3 "$DIR/resolve-weekly-inputs.py" \
+    --nix "$NIX" \
+    --r-nixpkgs-date "$R_NIXPKGS_DATE" \
+    --bp-cells-rev "$BP_CELLS_REV" \
+    --bp-cells-sha256 "$BP_CELLS_SHA256")"
+  eval "$resolved_inputs"
+  export R_NIXPKGS_DATE BP_CELLS_REV BP_CELLS_SHA256
 }
 
 select_batch() {
@@ -142,8 +155,11 @@ build_batch() {
   python3 "$DIR/summarize-results.py" "$RESULTS_JSON"
 }
 
+resolve_weekly_inputs
+
 echo "[$(date)] Weekly missing-package run"
-echo "R_NIXPKGS_DATE=$R_NIXPKGS_DATE CACHE=$CACHE CACHE_URL=$CACHE_URL ATTIC_DB=$ATTIC_DB"
+echo "R_NIXPKGS_DATE=$R_NIXPKGS_DATE BP_CELLS_REV=$BP_CELLS_REV BP_CELLS_SHA256=$BP_CELLS_SHA256"
+echo "CACHE=$CACHE CACHE_URL=$CACHE_URL ATTIC_DB=$ATTIC_DB"
 echo "MAX_JOBS=$MAX_JOBS BUILD_CORES=$BUILD_CORES DRY_RUN=$DRY_RUN"
 echo "BATCH_SIZE=$BATCH_SIZE MAX_BATCHES=$MAX_BATCHES RUN_GC=$RUN_GC MIN_FREE_GB=$MIN_FREE_GB NO_PROGRESS_LIMIT=$NO_PROGRESS_LIMIT"
 echo "free disk at start: $(free_gb) GiB"

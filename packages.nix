@@ -7,6 +7,12 @@ let
     value = builtins.getEnv "R_NIXPKGS_DATE";
   in if value == "" then "2026-05-18" else value;
 
+  defaultBPCellsRev = "adc4a3c30f60a03522f58947d733d7d77a6eb2cf";
+  BPCellsRev = let
+    value = builtins.getEnv "BP_CELLS_REV";
+  in if value == "" then defaultBPCellsRev else value;
+  BPCellsSha256 = builtins.getEnv "BP_CELLS_SHA256";
+
   pkgs = import (fetchTarball "https://github.com/rstats-on-nix/nixpkgs/archive/${rNixpkgsDate}.tar.gz") { config = { allowBroken = true; }; };
 
   isDerivation = value: builtins.isAttrs value && value ? type && value.type == "derivation";
@@ -35,10 +41,15 @@ let
   ) (unique (builtins.attrNames pkgs.rPackages));
   generated_r_pkgs = builtins.map (name: pkgs.rPackages.${name}) valid_r_names;
 
-  BPCells-src = pkgs.fetchgit {
+  BPCells-src = if BPCellsSha256 == "" then pkgs.fetchgit {
     url = "https://github.com/bnprks/BPCells";
-    rev = "adc4a3c30f60a03522f58947d733d7d77a6eb2cf";
-    sha256 = "sha256-7VRa1iADZ3Btcke8IHqCF97O2HhE184dZ1cH1i66Uhc=";
+    rev = BPCellsRev;
+    sha256 = if BPCellsRev == defaultBPCellsRev
+      then "sha256-7VRa1iADZ3Btcke8IHqCF97O2HhE184dZ1cH1i66Uhc="
+      else pkgs.lib.fakeSha256;
+  } else pkgs.fetchzip {
+    url = "https://github.com/bnprks/BPCells/archive/${BPCellsRev}.tar.gz";
+    sha256 = BPCellsSha256;
   };
 
   BPCells = pkgs.rPackages.buildRPackage {
