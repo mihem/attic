@@ -26,7 +26,6 @@ LOG="$LOGDIR/weekly-missing-$(date +%Y-%m-%d_%H%M%S).log"
 TMPDIR="$(mktemp -d "$DIR/.weekly-missing.XXXXXX")"
 NIX_CONF_DIR="$TMPDIR/nix-conf"
 OUTPATHS_JSON="$TMPDIR/outpaths.json"
-OUTPATHS_JSONL="$TMPDIR/outpaths.jsonl"
 MISSING_NAMES="$TMPDIR/missing-packages.txt"
 BATCH_NAMES="$TMPDIR/batch-packages.txt"
 MISSING_NIX="$TMPDIR/missing-packages.nix"
@@ -106,27 +105,9 @@ NIX
 
 check_missing() {
 	echo "[$(date)] Evaluating rPackagesSet output paths..."
-	R_NIXPKGS_DATE="$R_NIXPKGS_DATE" "$NIX" run .#nix-eval-jobs -- \
-		--workers "$MAX_JOBS" \
-		--no-instantiate \
-		--impure \
-		--apply 'drv: { outPath = drv.outPath; }' \
-		--expr 'let x = import ./packages.nix; in x.rPackagesSet' \
-		>"$OUTPATHS_JSONL"
-	python3 - "$OUTPATHS_JSONL" "$OUTPATHS_JSON" <<'PY'
-import json
-import sys
-from pathlib import Path
-
-outpaths = {}
-for line in Path(sys.argv[1]).read_text().splitlines():
-    if not line.strip():
-        continue
-    row = json.loads(line)
-    outpaths[row["attrPath"][-1]] = row["outputs"]["out"]
-
-Path(sys.argv[2]).write_text(json.dumps(outpaths, sort_keys=True) + "\n")
-PY
+	R_NIXPKGS_DATE="$R_NIXPKGS_DATE" "$NIX" eval --impure --json --expr \
+		'let x = import ./packages.nix; in builtins.mapAttrs (name: value: value.outPath) x.rPackagesSet' \
+		>"$OUTPATHS_JSON"
 
 	echo "[$(date)] Checking Attic SQLite database..."
 	python3 "$DIR/weekly-sqlite.py" "$OUTPATHS_JSON" "$MISSING_NAMES" "$ATTIC_DB" "$CACHE"
