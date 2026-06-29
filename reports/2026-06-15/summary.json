@@ -1,0 +1,10 @@
+{
+  "available": 32327,
+  "blacklist_file": "/home/ubuntu/attic/blacklist.txt",
+  "blacklisted": 1292,
+  "cache": "r-packages",
+  "date": "2026-06-15",
+  "generated_at": "2026-06-29T17:52:40.553429+00:00",
+  "missing": 0,
+  "total_evaluated": 32327
+}
