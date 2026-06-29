@@ -15,11 +15,13 @@
         attic-server = pkgs.attic-server;
         attic-client = pkgs.attic-client;
         nix-fast-build = pkgs.nix-fast-build;
+        nix-eval-jobs = pkgs.nix-eval-jobs;
       };
 
       devShells.x86_64-linux.default = pkgs.mkShell {
         buildInputs = [
           pkgs.nix-fast-build
+          pkgs.nix-eval-jobs
           pkgs.attic-client
           pkgs.R
           pkgs.python3
