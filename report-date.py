@@ -81,7 +81,8 @@ def update_index(reports_dir):
     lines.extend(
         [
             "",
-            "Each date directory contains `available.txt`, `available-store-paths.tsv`, `missing.txt`, `blacklisted.txt`, and `summary.json`.",
+            "Each date directory contains `available.txt`, `available-store-paths.tsv`, `missing.txt`, `blacklisted.txt`, `summary.json`, and `pins.json`.",
+            "Per-date `summary.json` and `pins.json` include the source pins used for that cache run.",
         ]
     )
     (reports_path / "README.md").write_text("\n".join(lines) + "\n")
@@ -118,11 +119,19 @@ def main():
     write_lines(out_dir / "missing.txt", missing)
     write_lines(out_dir / "blacklisted.txt", blacklist)
 
+    pins = {
+        "r_nixpkgs_date": args.date,
+        "bp_cells_rev": os.environ["BP_CELLS_REV"],
+        "bp_cells_sha256": os.environ["BP_CELLS_SHA256"],
+    }
+
     summary = {
         "date": args.date,
         "cache": args.cache,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "blacklist_file": str(Path(args.blacklist).resolve()),
+        "bp_cells_rev": pins["bp_cells_rev"],
+        "bp_cells_sha256": pins["bp_cells_sha256"],
         "total_evaluated": len(outpaths),
         "available": len(available),
         "missing": len(missing),
@@ -130,6 +139,9 @@ def main():
     }
     (out_dir / "summary.json").write_text(
         json.dumps(summary, indent=2, sort_keys=True) + "\n"
+    )
+    (out_dir / "pins.json").write_text(
+        json.dumps(pins, indent=2, sort_keys=True) + "\n"
     )
 
     readme = f"""# r-packages cache report: {args.date}
@@ -147,7 +159,8 @@ Files:
 - `available-store-paths.tsv`: available package names and exact store paths.
 - `missing.txt`: evaluated package names still missing from Attic.
 - `blacklisted.txt`: blacklist snapshot used for this report.
-- `summary.json`: machine-readable summary.
+- `summary.json`: machine-readable summary, including source pins.
+- `pins.json`: source pins used for this cache run.
 """
     (out_dir / "README.md").write_text(readme)
 
