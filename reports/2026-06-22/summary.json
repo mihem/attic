@@ -1,0 +1,12 @@
+{
+  "available": 32401,
+  "blacklist_file": "/home/ubuntu/attic/blacklist.txt",
+  "blacklisted": 1305,
+  "bp_cells_rev": "adc4a3c30f60a03522f58947d733d7d77a6eb2cf",
+  "bp_cells_sha256": "sha256-7VRa1iADZ3Btcke8IHqCF97O2HhE184dZ1cH1i66Uhc=",
+  "cache": "r-packages",
+  "date": "2026-06-22",
+  "generated_at": "2026-07-01T07:09:19.897427+00:00",
+  "missing": 0,
+  "total_evaluated": 32401
+}
