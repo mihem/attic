@@ -9,12 +9,7 @@ let
     in
     if value == "" then "2026-05-18" else value;
 
-  defaultBPCellsRev = "adc4a3c30f60a03522f58947d733d7d77a6eb2cf";
-  BPCellsRev =
-    let
-      value = builtins.getEnv "BP_CELLS_REV";
-    in
-    if value == "" then defaultBPCellsRev else value;
+  BPCellsRev = builtins.getEnv "BP_CELLS_REV";
   BPCellsSha256 = builtins.getEnv "BP_CELLS_SHA256";
 
   pkgs =
