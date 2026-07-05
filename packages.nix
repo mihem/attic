@@ -61,22 +61,15 @@ let
   ) (unique (builtins.attrNames pkgs.rPackages));
   generated_r_pkgs = builtins.map (name: pkgs.rPackages.${name}) valid_r_names;
 
-  BPCells-src =
-    if BPCellsSha256 == "" then
-      pkgs.fetchgit {
-        url = "https://github.com/bnprks/BPCells";
-        rev = BPCellsRev;
-        sha256 =
-          if BPCellsRev == defaultBPCellsRev then
-            "sha256-7VRa1iADZ3Btcke8IHqCF97O2HhE184dZ1cH1i66Uhc="
-          else
-            pkgs.lib.fakeSha256;
-      }
-    else
-      pkgs.fetchzip {
-        url = "https://github.com/bnprks/BPCells/archive/${BPCellsRev}.tar.gz";
-        sha256 = BPCellsSha256;
-      };
+  BPCells-src = pkgs.fetchgit {
+    url = "https://github.com/bnprks/BPCells";
+    rev = BPCellsRev;
+    sha256 =
+      if BPCellsSha256 != "" then
+        BPCellsSha256
+      else
+        pkgs.lib.fakeSha256;
+  };
 
   BPCells = pkgs.rPackages.buildRPackage {
     name = "BPCells";
