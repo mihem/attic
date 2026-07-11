@@ -6,29 +6,11 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
+from attic_db import cached_hashes
+
 
 def store_hash(out_path):
     return out_path.split("/nix/store/", 1)[1].split("-", 1)[0]
-
-
-def sql_string(value):
-    return "'" + value.replace("'", "''") + "'"
-
-
-def cached_hashes(attic_db, cache_name):
-    query = f"""
-      select o.store_path_hash
-      from object o
-      join cache c on c.id = o.cache_id
-      where c.name = {sql_string(cache_name)};
-    """
-    result = subprocess.run(
-        ["sudo", "sqlite3", "-readonly", "-cmd", ".timeout 60000", attic_db, query],
-        check=True,
-        text=True,
-        stdout=subprocess.PIPE,
-    )
-    return set(result.stdout.splitlines())
 
 
 def read_blacklist(path):
@@ -94,12 +76,12 @@ def main():
     parser.add_argument("--blacklist", default="blacklist.txt")
     parser.add_argument("--reports-dir", default="reports")
     parser.add_argument("--cache", default="r-packages")
-    parser.add_argument("--attic-db", default="/var/lib/attic/server.db")
+    parser.add_argument("--database", default="/var/lib/attic/server.db")
     parser.add_argument("--nix", default="/nix/var/nix/profiles/default/bin/nix")
     args = parser.parse_args()
 
     outpaths = nix_eval_outpaths(args.date, args.blacklist, args.nix)
-    cached = cached_hashes(args.attic_db, args.cache)
+    cached = cached_hashes(args.database, args.cache)
     blacklist = read_blacklist(args.blacklist)
 
     available = []

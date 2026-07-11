@@ -6,7 +6,7 @@ cd "$DIR"
 
 CACHE="${CACHE:-r-packages}"
 CACHE_URL="${CACHE_URL:-https://osmzhlab.uni-muenster.de:4949/r-packages}"
-ATTIC_DB="${ATTIC_DB:-/var/lib/attic/server.db}"
+ATTIC_DATABASE="${ATTIC_DATABASE:-${ATTIC_DB:-/var/lib/attic/server.db}}"
 NIX="${NIX:-/nix/var/nix/profiles/default/bin/nix}"
 NIX_STORE="${NIX_STORE:-/nix/var/nix/profiles/default/bin/nix-store}"
 R_NIXPKGS_DATE="${R_NIXPKGS_DATE:-}"
@@ -109,8 +109,8 @@ check_missing() {
 		'let x = import ./packages.nix; in builtins.mapAttrs (name: value: value.outPath) x.rPackagesSet' \
 		>"$OUTPATHS_JSON"
 
-	echo "[$(date)] Checking Attic SQLite database..."
-	python3 "$DIR/weekly-sqlite.py" "$OUTPATHS_JSON" "$MISSING_NAMES" "$ATTIC_DB" "$CACHE"
+	echo "[$(date)] Checking Attic database..."
+	python3 "$DIR/weekly-database.py" "$OUTPATHS_JSON" "$MISSING_NAMES" "$ATTIC_DATABASE" "$CACHE"
 }
 
 maybe_gc() {
@@ -159,7 +159,7 @@ resolve_weekly_inputs
 
 echo "[$(date)] Weekly missing-package run"
 echo "R_NIXPKGS_DATE=$R_NIXPKGS_DATE BP_CELLS_REV=$BP_CELLS_REV BP_CELLS_SHA256=$BP_CELLS_SHA256"
-echo "CACHE=$CACHE CACHE_URL=$CACHE_URL ATTIC_DB=$ATTIC_DB"
+echo "CACHE=$CACHE CACHE_URL=$CACHE_URL ATTIC_DATABASE=$ATTIC_DATABASE"
 echo "MAX_JOBS=$MAX_JOBS BUILD_CORES=$BUILD_CORES DRY_RUN=$DRY_RUN"
 echo "BATCH_SIZE=$BATCH_SIZE MAX_BATCHES=$MAX_BATCHES RUN_GC=$RUN_GC MIN_FREE_GB=$MIN_FREE_GB NO_PROGRESS_LIMIT=$NO_PROGRESS_LIMIT"
 echo "free disk at start: $(free_gb) GiB"
@@ -209,7 +209,7 @@ if [ "$DRY_RUN" = "1" ]; then
 	echo "[$(date)] Dry run; not writing report."
 else
 	echo "[$(date)] Writing report for $R_NIXPKGS_DATE..."
-	python3 "$DIR/report-date.py" "$R_NIXPKGS_DATE" --blacklist "$DIR/blacklist.txt" --cache "$CACHE" --attic-db "$ATTIC_DB" --nix "$NIX"
+	python3 "$DIR/report-date.py" "$R_NIXPKGS_DATE" --blacklist "$DIR/blacklist.txt" --cache "$CACHE" --database "$ATTIC_DATABASE" --nix "$NIX"
 fi
 
 echo "[$(date)] Done."
