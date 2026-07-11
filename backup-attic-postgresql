@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+destination=/var/backups/attic-postgresql/daily
+temporary=$(runuser -u postgres -- mktemp /tmp/attic-postgresql.XXXXXX.dump)
+
+cleanup() {
+    rm -f "$temporary"
+}
+trap cleanup EXIT
+
+install -d -m 0750 -o root -g root "$destination"
+runuser -u postgres -- pg_dump --format=custom --file="$temporary" attic
+runuser -u postgres -- pg_restore --list "$temporary" >/dev/null
+install -m 0600 -o root -g root "$temporary" "$destination/attic.dump"
+sha256sum "$destination/attic.dump" >"$destination/attic.dump.sha256"

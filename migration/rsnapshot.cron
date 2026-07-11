@@ -1,0 +1,5 @@
+# Create a verified PostgreSQL dump before rsnapshot's daily rotation.
+55 3	* * *		root	/usr/local/sbin/backup-attic-postgresql
+0 4	* * *		root	/usr/bin/rsnapshot daily
+30 4	* * 0		root	/usr/bin/rsnapshot weekly
+0 5	1 * *		root	/usr/bin/rsnapshot monthly
