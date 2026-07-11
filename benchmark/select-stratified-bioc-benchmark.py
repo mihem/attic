@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
+import os
 import random
 import re
-import subprocess
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from attic_db import query  # noqa: E402
 
 
 def main():
@@ -12,15 +16,13 @@ def main():
     names = re.findall(r'"([^"]+)"', bioc_list.read_text())
     name_by_norm = {name.lower().replace("_", "."): name for name in names}
 
-    query = """
+    sql = """
 select store_path,nar_size
 from object join nar on nar.id=object.nar_id
 where store_path like '%-r-%';
 """
-    rows = subprocess.check_output(
-        ["sudo", "sqlite3", "-tabs", "/var/lib/attic/server.db", query],
-        text=True,
-    )
+    database = os.environ.get("ATTIC_DATABASE", "/var/lib/attic/server.db")
+    rows = query(database, sql, tabs=True)
 
     candidates = {}
     for line in rows.splitlines():

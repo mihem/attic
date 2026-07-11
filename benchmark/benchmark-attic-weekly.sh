@@ -11,6 +11,7 @@ SERVICE=${SERVICE:-attic-server.service}
 KEY=${KEY:-/etc/attic/signing-key.sec}
 LOGDIR=${LOGDIR:-./logs}
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ATTIC_DATABASE=${ATTIC_DATABASE:-/var/lib/attic/server.db}
 
 OLD_REV=${OLD_REV:-2026-05-18}
 NEW_REV=${NEW_REV:-2026-05-25}
@@ -98,7 +99,7 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
 	exit 0
 fi
 
-for cmd in nix-build sqlite3 sudo python3 timeout; do
+for cmd in nix-build sudo python3 timeout; do
 	if ! command -v "$cmd" >/dev/null 2>&1; then
 		echo "Required command not found: $cmd" >&2
 		exit 1
@@ -122,7 +123,7 @@ log() {
 }
 
 db_scalar() {
-	sudo sqlite3 /var/lib/attic/server.db "$1"
+	python3 "$DIR/../attic_db.py" "$ATTIC_DATABASE" "$1"
 }
 
 db_stats() {
@@ -263,7 +264,7 @@ with open(sys.argv[2], 'w') as out:
 PY
 		PATH_COUNT=$(wc -l <"$candidate_attrs")
 	else
-		sudo sqlite3 -tabs /var/lib/attic/server.db \
+		python3 "$DIR/../attic_db.py" --tabs "$ATTIC_DATABASE" \
 			"select store_path, cast(round(nar_size/1024.0/1024) as integer) from object join nar on nar.id=object.nar_id where store_path like '%-r-%' and nar_size between $((REAL_MIN_MIB * 1024 * 1024)) and $((REAL_MAX_MIB * 1024 * 1024)) order by nar_size desc limit $MAX_CANDIDATES;" \
 			>"$candidates"
 

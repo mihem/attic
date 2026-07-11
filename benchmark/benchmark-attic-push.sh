@@ -10,6 +10,8 @@ CONFIG=${CONFIG:-/etc/attic/server.toml}
 SERVICE=${SERVICE:-attic-server.service}
 KEY=${KEY:-/etc/attic/signing-key.sec}
 LOGDIR=${LOGDIR:-./logs}
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ATTIC_DATABASE=${ATTIC_DATABASE:-/var/lib/attic/server.db}
 
 PATH_COUNT=${PATH_COUNT:-8}
 COMMON_MIB=${COMMON_MIB:-16}
@@ -123,7 +125,7 @@ fi
 
 require_cmd dd
 require_cmd nix-store
-require_cmd sqlite3
+require_cmd python3
 require_cmd sudo
 
 if [ ! -x "$ATTIC" ]; then
@@ -151,7 +153,7 @@ log() {
 }
 
 db_scalar() {
-	sudo sqlite3 /var/lib/attic/server.db "$1"
+	python3 "$DIR/../attic_db.py" "$ATTIC_DATABASE" "$1"
 }
 
 db_stats() {
@@ -185,7 +187,7 @@ select_real_sources() {
 		return
 	fi
 
-	sudo sqlite3 -tabs /var/lib/attic/server.db \
+	python3 "$DIR/../attic_db.py" --tabs "$ATTIC_DATABASE" \
 		"select store_path, cast(round(nar_size/1024.0/1024) as integer) from object join nar on nar.id=object.nar_id where store_path like '%-r-%' and nar_size between $((REAL_MIN_MIB * 1024 * 1024)) and $((REAL_MAX_MIB * 1024 * 1024)) order by nar_size desc;" \
 		>"$candidates"
 

@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import json
 import os
-import sqlite3
+import subprocess
 import sys
+
+from attic_db import backend, query, sql_string, sqlite_path
 
 
 def clean_attr(attr):
@@ -24,43 +26,44 @@ def format_bytes(value):
         value /= 1024
 
 
-def read_attic_growth(started_at, db_path):
-    if not started_at or not db_path or not os.path.exists(db_path):
+def read_attic_growth(started_at, database):
+    if not started_at or not database:
+        return None
+    if backend(database) == "sqlite" and not os.path.exists(sqlite_path(database)):
         return None
 
-    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
-    try:
-        nar_count, nar_logical = conn.execute(
-            """
+    timestamp = sql_string(started_at)
+    nar_count, nar_logical = query(
+        database,
+        f"""
             select count(*), coalesce(sum(nar_size), 0)
             from nar
-            where created_at >= ?
-            """,
-            (started_at,),
-        ).fetchone()
-        chunk_count, stored_bytes, chunk_logical = conn.execute(
-            """
+            where created_at >= {timestamp}
+        """,
+        tabs=True,
+    ).strip().split("\t")
+    chunk_count, stored_bytes, chunk_logical = query(
+        database,
+        f"""
             select count(*), coalesce(sum(file_size), 0), coalesce(sum(chunk_size), 0)
             from chunk
-            where created_at >= ?
-            """,
-            (started_at,),
-        ).fetchone()
-    finally:
-        conn.close()
+            where created_at >= {timestamp}
+        """,
+        tabs=True,
+    ).strip().split("\t")
 
     return {
-        "nar_count": nar_count,
-        "nar_logical": nar_logical,
-        "chunk_count": chunk_count,
-        "stored_bytes": stored_bytes,
-        "chunk_logical": chunk_logical,
+        "nar_count": int(nar_count),
+        "nar_logical": int(nar_logical),
+        "chunk_count": int(chunk_count),
+        "stored_bytes": int(stored_bytes),
+        "chunk_logical": int(chunk_logical),
     }
 
 
 def main():
     if len(sys.argv) not in (2, 4):
-        print("Usage: summarize-results.py <results.json> [run-started-at attic-db]")
+        print("Usage: summarize-results.py <results.json> [run-started-at database]")
         sys.exit(1)
 
     results_path = sys.argv[1]
@@ -108,7 +111,7 @@ def main():
 
     try:
         growth = read_attic_growth(started_at, attic_db)
-    except sqlite3.Error as e:
+    except (subprocess.CalledProcessError, ValueError) as e:
         growth = None
         print(f"  Attic newly uploaded paths: unavailable ({e})")
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import os
 import subprocess
 from urllib.parse import urlparse
@@ -76,3 +77,16 @@ def cached_hashes(database, cache_name):
       where c.name = {sql_string(cache_name)};
     """
     return set(query(database, sql).splitlines())
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Run a read-only Attic database query.")
+    parser.add_argument("database")
+    parser.add_argument("sql")
+    parser.add_argument("--tabs", action="store_true")
+    args = parser.parse_args()
+    print(query(args.database, args.sql, tabs=args.tabs), end="")
+
+
+if __name__ == "__main__":
+    main()
