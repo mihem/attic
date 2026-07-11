@@ -1,0 +1,9 @@
+LOAD DATABASE
+     FROM sqlite:///var/lib/attic/postgres-migration/server.db
+     INTO postgresql:///attic
+
+ WITH include no drop, truncate, create no tables, create no indexes,
+      reset sequences, disable triggers
+
+ INCLUDING ONLY TABLE NAMES LIKE 'cache', 'nar', 'chunk', 'object', 'chunkref'
+;
