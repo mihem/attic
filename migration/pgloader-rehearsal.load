@@ -1,0 +1,9 @@
+LOAD DATABASE
+     FROM sqlite:////var/lib/attic/postgres-rehearsal/server.db
+     INTO postgresql:///attic_rehearsal?host=/var/run/postgresql
+
+ WITH include no drop, truncate, create no tables, create no indexes,
+      reset sequences, disable triggers
+
+ INCLUDING ONLY TABLE NAMES LIKE 'cache', 'nar', 'chunk', 'object', 'chunkref'
+;
