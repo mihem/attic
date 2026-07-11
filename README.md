@@ -144,7 +144,7 @@ max-size = 4194304
 ```
 
 This is a compromise between weekly delta storage savings and operational
-smoothness for SQLite/NFS-backed Attic storage.
+smoothness for PostgreSQL/NFS-backed Attic storage.
 
 Benchmark setup:
 
@@ -172,5 +172,5 @@ Relevant benchmark results:
 The aggressive `128 KiB / 512 KiB` setting saved the most weekly-delta storage,
 but it more than doubled first-upload chunk count compared with the current
 setting. For this cache, the selected `8 MiB / 1 MiB` setting is the operational
-compromise: large weekly storage savings, fewer SQLite/NFS objects, and faster
+compromise: large weekly storage savings, fewer PostgreSQL/NFS objects, and faster
 first uploads.
