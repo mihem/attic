@@ -5,5 +5,5 @@ LOAD DATABASE
  WITH include no drop, truncate, create no tables, create no indexes,
       reset sequences, disable triggers
 
- INCLUDING ONLY TABLE NAMES LIKE 'cache', 'nar', 'chunk', 'object', 'chunkref'
+ INCLUDING ONLY TABLE NAMES MATCHING ~/^(cache|nar|chunk|object|chunkref)$/
 ;
