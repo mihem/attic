@@ -6,7 +6,7 @@ cd "$DIR"
 
 CACHE="${CACHE:-r-packages}"
 CACHE_URL="${CACHE_URL:-https://osmzhlab.uni-muenster.de:4949/r-packages}"
-ATTIC_DATABASE="${ATTIC_DATABASE:-${ATTIC_DB:-/var/lib/attic/server.db}}"
+ATTIC_DATABASE="${ATTIC_DATABASE:-${ATTIC_DB:-postgresql:///attic?host=/var/run/postgresql}}"
 NIX="${NIX:-/nix/var/nix/profiles/default/bin/nix}"
 NIX_STORE="${NIX_STORE:-/nix/var/nix/profiles/default/bin/nix-store}"
 R_NIXPKGS_DATE="${R_NIXPKGS_DATE:-}"

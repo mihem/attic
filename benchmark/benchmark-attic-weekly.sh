@@ -11,7 +11,7 @@ SERVICE=${SERVICE:-attic-server.service}
 KEY=${KEY:-/etc/attic/signing-key.sec}
 LOGDIR=${LOGDIR:-./logs}
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ATTIC_DATABASE=${ATTIC_DATABASE:-/var/lib/attic/server.db}
+ATTIC_DATABASE=${ATTIC_DATABASE:-postgresql:///attic?host=/var/run/postgresql}
 
 OLD_REV=${OLD_REV:-2026-05-18}
 NEW_REV=${NEW_REV:-2026-05-25}

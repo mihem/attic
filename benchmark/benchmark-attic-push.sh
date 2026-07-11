@@ -11,7 +11,7 @@ SERVICE=${SERVICE:-attic-server.service}
 KEY=${KEY:-/etc/attic/signing-key.sec}
 LOGDIR=${LOGDIR:-./logs}
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ATTIC_DATABASE=${ATTIC_DATABASE:-/var/lib/attic/server.db}
+ATTIC_DATABASE=${ATTIC_DATABASE:-postgresql:///attic?host=/var/run/postgresql}
 
 PATH_COUNT=${PATH_COUNT:-8}
 COMMON_MIB=${COMMON_MIB:-16}

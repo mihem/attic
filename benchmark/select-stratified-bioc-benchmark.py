@@ -21,7 +21,9 @@ select store_path,nar_size
 from object join nar on nar.id=object.nar_id
 where store_path like '%-r-%';
 """
-    database = os.environ.get("ATTIC_DATABASE", "/var/lib/attic/server.db")
+    database = os.environ.get(
+        "ATTIC_DATABASE", "postgresql:///attic?host=/var/run/postgresql"
+    )
     rows = query(database, sql, tabs=True)
 
     candidates = {}

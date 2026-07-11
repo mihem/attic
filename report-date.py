@@ -76,7 +76,9 @@ def main():
     parser.add_argument("--blacklist", default="blacklist.txt")
     parser.add_argument("--reports-dir", default="reports")
     parser.add_argument("--cache", default="r-packages")
-    parser.add_argument("--database", default="/var/lib/attic/server.db")
+    parser.add_argument(
+        "--database", default="postgresql:///attic?host=/var/run/postgresql"
+    )
     parser.add_argument("--nix", default="/nix/var/nix/profiles/default/bin/nix")
     args = parser.parse_args()
 
