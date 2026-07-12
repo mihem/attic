@@ -25846,6 +25846,8 @@ qvcalc
 qvirus
 qwalkr
 r-BPCells
+r-permFDP
+r-scMisc
 r.blip
 r.jive
 r.proxy

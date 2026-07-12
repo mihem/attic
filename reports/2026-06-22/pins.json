@@ -1,5 +1,9 @@
 {
   "bp_cells_rev": "adc4a3c30f60a03522f58947d733d7d77a6eb2cf",
   "bp_cells_sha256": "sha256-7VRa1iADZ3Btcke8IHqCF97O2HhE184dZ1cH1i66Uhc=",
-  "r_nixpkgs_date": "2026-06-22"
+  "perm_fdp_rev": "ac6e6cc174d9b81f6f3c31ad03069c38f2f7f2c9",
+  "perm_fdp_sha256": "sha256-SafkrAzrki+E4J7/jqPIHQoGnwQV9XyXnKGSJTdT8WQ=",
+  "r_nixpkgs_date": "2026-06-22",
+  "sc_misc_rev": "70d2f97b071f743093e7cad23f890380a489833f",
+  "sc_misc_sha256": "sha256-E+um8vKi09PrQcSUov4XNT8PAwImK/c7XiRc6sU8RDk="
 }

@@ -2,8 +2,8 @@
 
 | Metric | Count |
 |---|---:|
-| Evaluated packages | 32401 |
-| Available in Attic | 32401 |
+| Evaluated packages | 32403 |
+| Available in Attic | 32403 |
 | Missing from Attic | 0 |
 | Blacklisted | 1305 |
 
