@@ -107,6 +107,10 @@ def main():
         "r_nixpkgs_date": args.date,
         "bp_cells_rev": os.environ["BP_CELLS_REV"],
         "bp_cells_sha256": os.environ["BP_CELLS_SHA256"],
+        "sc_misc_rev": os.environ["SC_MISC_REV"],
+        "sc_misc_sha256": os.environ["SC_MISC_SHA256"],
+        "perm_fdp_rev": os.environ["PERM_FDP_REV"],
+        "perm_fdp_sha256": os.environ["PERM_FDP_SHA256"],
     }
 
     summary = {
@@ -116,6 +120,10 @@ def main():
         "blacklist_file": str(Path(args.blacklist).resolve()),
         "bp_cells_rev": pins["bp_cells_rev"],
         "bp_cells_sha256": pins["bp_cells_sha256"],
+        "sc_misc_rev": pins["sc_misc_rev"],
+        "sc_misc_sha256": pins["sc_misc_sha256"],
+        "perm_fdp_rev": pins["perm_fdp_rev"],
+        "perm_fdp_sha256": pins["perm_fdp_sha256"],
         "total_evaluated": len(outpaths),
         "available": len(available),
         "missing": len(missing),
