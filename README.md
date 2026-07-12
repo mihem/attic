@@ -34,6 +34,16 @@ Exact coverage by date is listed in [`reports/`](reports/). The numbers can chan
 between weekly `R_NIXPKGS_DATE` snapshots because nixpkgs package availability
 and build failures change over time.
 
+The evaluated set also includes custom GitHub packages that are absent from the
+dated package set:
+
+- [`BPCells`](https://github.com/bnprks/BPCells)
+- [`permFDP`](https://github.com/steven-shuken/permFDP)
+- [`scMisc`](https://github.com/mihem/scMisc)
+
+`weekly-missing.sh` resolves and logs the current source commit and Nix hash for
+each custom package, so a run remains reproducible from its log.
+
 ## Reports
 
 Per-date package availability reports are written to [`reports/`](reports/).
