@@ -21,6 +21,7 @@ let
       {
         config = {
           allowBroken = true;
+          allowUnfree = true;
         };
       };
 
