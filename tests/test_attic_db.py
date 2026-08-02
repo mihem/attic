@@ -1,3 +1,4 @@
+import json
 import os
 import unittest
 from unittest.mock import patch
@@ -36,6 +37,22 @@ class AtticDatabaseTest(unittest.TestCase):
 
         self.assertEqual({"hash-a", "hash-b"}, hashes)
         self.assertIn("r-''packages", query.call_args.args[1])
+
+    def test_upstream_cached_paths_ignores_missing_paths(self):
+        paths = [
+            "/nix/store/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-a",
+            "/nix/store/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb-b",
+        ]
+        result = unittest.mock.Mock(
+            stdout=json.dumps({paths[0]: {}, paths[1]: None}), stderr=""
+        )
+
+        with patch("attic_db.subprocess.run", return_value=result):
+            cached = attic_db.upstream_cached_paths(
+                "nix", paths, "https://cache.nixos.org"
+            )
+
+        self.assertEqual({paths[0]}, cached)
 
 
 if __name__ == "__main__":

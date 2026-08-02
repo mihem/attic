@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import json
 import os
 import subprocess
 from urllib.parse import urlparse
@@ -77,6 +78,28 @@ def cached_hashes(database, cache_name):
       where c.name = {sql_string(cache_name)};
     """
     return set(query(database, sql).splitlines())
+
+
+def upstream_cached_paths(nix, paths, upstream_store, batch_size=500):
+    cached = set()
+    paths = sorted(set(paths))
+    for offset in range(0, len(paths), batch_size):
+        batch = paths[offset : offset + batch_size]
+        result = subprocess.run(
+            [nix, "path-info", "--store", upstream_store, "--json", *batch],
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        try:
+            info = json.loads(result.stdout)
+        except json.JSONDecodeError as error:
+            raise RuntimeError(
+                f"could not query upstream cache {upstream_store}: {result.stderr.strip()}"
+            ) from error
+        cached.update(path for path, value in info.items() if value is not None)
+    return cached
 
 
 def main():

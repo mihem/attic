@@ -6,7 +6,7 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-from attic_db import cached_hashes
+from attic_db import cached_hashes, upstream_cached_paths
 
 
 def store_hash(out_path):
@@ -80,17 +80,22 @@ def main():
         "--database", default="postgresql:///attic?host=/var/run/postgresql"
     )
     parser.add_argument("--nix", default="/nix/var/nix/profiles/default/bin/nix")
+    parser.add_argument("--upstream-store", default="https://cache.nixos.org")
     args = parser.parse_args()
 
     outpaths = nix_eval_outpaths(args.date, args.blacklist, args.nix)
     cached = cached_hashes(args.database, args.cache)
     blacklist = read_blacklist(args.blacklist)
 
+    not_in_attic = [
+        path for path in outpaths.values() if store_hash(path) not in cached
+    ]
+    upstream = upstream_cached_paths(args.nix, not_in_attic, args.upstream_store)
     available = []
     missing = []
     store_paths = []
     for name, path in sorted(outpaths.items()):
-        if store_hash(path) in cached:
+        if store_hash(path) in cached or path in upstream:
             available.append(name)
             store_paths.append(f"{name}\t{path}")
         else:
@@ -141,15 +146,15 @@ def main():
 | Metric | Count |
 |---|---:|
 | Evaluated packages | {len(outpaths)} |
-| Available in Attic | {len(available)} |
-| Missing from Attic | {len(missing)} |
+| Available in Attic or in cache.nixos.org | {len(available)} |
+| Missing from Attic and cache.nixos.org | {len(missing)} |
 | Blacklisted | {len(blacklist)} |
 
 Files:
 
-- `available.txt`: package names available in Attic for this date.
+- `available.txt`: package names available in Attic or in `cache.nixos.org` for this date.
 - `available-store-paths.tsv`: available package names and exact store paths.
-- `missing.txt`: evaluated package names still missing from Attic.
+- `missing.txt`: evaluated package names unavailable from Attic and `cache.nixos.org`.
 - `blacklisted.txt`: blacklist snapshot used for this report.
 - `summary.json`: machine-readable summary, including source pins.
 - `pins.json`: source pins used for this cache run.
