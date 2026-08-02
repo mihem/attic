@@ -7,6 +7,7 @@
 | [`2026-06-09`](2026-06-09/) | 32274 | 32274 | 0 | 1290 |
 | [`2026-06-15`](2026-06-15/) | 32327 | 32327 | 0 | 1292 |
 | [`2026-06-22`](2026-06-22/) | 32403 | 32403 | 0 | 1305 |
+| [`2026-07-27`](2026-07-27/) | 32811 | 32811 | 0 | 1325 |
 
 Each date directory contains `available.txt`, `available-store-paths.tsv`, `missing.txt`, `blacklisted.txt`, `summary.json`, and `pins.json`.
 Per-date `summary.json` and `pins.json` include the source pins used for that cache run.
