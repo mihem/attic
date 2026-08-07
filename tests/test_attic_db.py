@@ -1,6 +1,6 @@
+import json
 import os
 import unittest
-from urllib.error import HTTPError
 from unittest.mock import patch
 
 import attic_db
@@ -38,57 +38,21 @@ class AtticDatabaseTest(unittest.TestCase):
         self.assertEqual({"hash-a", "hash-b"}, hashes)
         self.assertIn("r-''packages", query.call_args.args[1])
 
-    def test_narinfo_reads_sizes(self):
-        path = "/nix/store/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-package"
-
-        class Response:
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *_args):
-                pass
-
-            @staticmethod
-            def read():
-                return b"StorePath: ignored\nFileSize: 123\nNarSize: 456\n"
-
-        with patch("attic_db.urlopen", return_value=Response()) as urlopen:
-            result = attic_db.narinfo(path, "https://cache.nixos.org")
-
-        self.assertEqual((path, 123, 456), result)
-        self.assertEqual(
-            "https://cache.nixos.org/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.narinfo",
-            urlopen.call_args.args[0].full_url,
-        )
-
-    def test_narinfo_treats_404_as_missing(self):
-        path = "/nix/store/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-package"
-        error = HTTPError("url", 404, "missing", {}, None)
-
-        with patch("attic_db.urlopen", side_effect=error):
-            result = attic_db.narinfo(path, "https://cache.nixos.org")
-
-        self.assertEqual((path, None, None), result)
-
-    def test_parallel_upstream_check_sums_available_paths(self):
+    def test_upstream_cached_paths_ignores_missing_paths(self):
         paths = [
             "/nix/store/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-a",
             "/nix/store/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb-b",
         ]
+        result = unittest.mock.Mock(
+            stdout=json.dumps({paths[0]: {}, paths[1]: None}), stderr=""
+        )
 
-        def check(path, *_args):
-            if path == paths[0]:
-                return path, 100, 200
-            return path, None, None
-
-        with patch("attic_db.narinfo", side_effect=check):
-            cached, file_bytes, nar_bytes = attic_db.upstream_cached_paths(
-                paths, "https://cache.nixos.org", workers=2, progress_every=0
+        with patch("attic_db.subprocess.run", return_value=result):
+            cached = attic_db.upstream_cached_paths(
+                "nix", paths, "https://cache.nixos.org"
             )
 
         self.assertEqual({paths[0]}, cached)
-        self.assertEqual(100, file_bytes)
-        self.assertEqual(200, nar_bytes)
 
 
 if __name__ == "__main__":
