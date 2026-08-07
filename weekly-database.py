@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-import argparse
 import json
+import sys
 
-from attic_db import cached_hashes, upstream_cached_paths
+from attic_db import cached_hashes
 
 
 def store_hash(out_path):
@@ -10,40 +10,35 @@ def store_hash(out_path):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Classify evaluated cache outputs.")
-    parser.add_argument("outpaths_json")
-    parser.add_argument("missing_names")
-    parser.add_argument("database")
-    parser.add_argument("cache_name")
-    parser.add_argument("--nix", default="/nix/var/nix/profiles/default/bin/nix")
-    parser.add_argument("--upstream-store", default="https://cache.nixos.org")
-    args = parser.parse_args()
+    if len(sys.argv) != 5:
+        print(
+            "Usage: weekly-database.py <outpaths.json> <missing-packages.txt> <database> <cache-name>"
+        )
+        sys.exit(1)
 
-    with open(args.outpaths_json) as handle:
+    outpaths_json, missing_names, database, cache_name = sys.argv[1:]
+
+    with open(outpaths_json) as handle:
         outpaths = json.load(handle)
 
-    cached = cached_hashes(args.database, args.cache_name)
-    not_in_attic = [
-        path for path in outpaths.values() if store_hash(path) not in cached
-    ]
-    upstream = upstream_cached_paths(args.nix, not_in_attic, args.upstream_store)
+    cached = cached_hashes(database, cache_name)
     missing = [
         name
         for name, path in sorted(outpaths.items())
-        if store_hash(path) not in cached and path not in upstream
+        if store_hash(path) not in cached
     ]
 
-    with open(args.missing_names, "w") as handle:
+    with open(missing_names, "w") as handle:
         for name in missing:
             handle.write(name + "\n")
 
     print(f"total attrs: {len(outpaths)}")
-    available_count = len(outpaths) - len(missing)
-    print(f"available in Attic or in cache.nixos.org: {available_count}")
-    print(f"missing from Attic and cache.nixos.org: {len(missing)}")
-    if outpaths and available_count == 0:
+    cached_count = len(outpaths) - len(missing)
+    print(f"cached in Attic: {cached_count}")
+    print(f"missing from Attic: {len(missing)}")
+    if outpaths and cached_count == 0:
         print(
-            "warning: no evaluated store paths are present in Attic or in cache.nixos.org; changing R_NIXPKGS_DATE can change every output hash"
+            "warning: no evaluated store paths are present in Attic; changing R_NIXPKGS_DATE can change every output hash"
         )
     if missing:
         print("missing sample: " + ", ".join(missing[:50]))
