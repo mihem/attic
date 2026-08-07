@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 import argparse
-import json
 import os
 import subprocess
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 from urllib.parse import urlparse
 
 
@@ -80,30 +83,74 @@ def cached_hashes(database, cache_name):
     return set(query(database, sql).splitlines())
 
 
-def upstream_cached_paths(nix, paths, upstream_store, batch_size=500):
-    cached = set()
-    paths = sorted(set(paths))
-    for offset in range(0, len(paths), batch_size):
-        batch = paths[offset : offset + batch_size]
-        result = subprocess.run(
-            [nix, "path-info", "--store", upstream_store, "--json", *batch],
-            check=False,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
+def narinfo(path, upstream_store, timeout=30, retries=2):
+    store_path_hash = path.split("/nix/store/", 1)[1].split("-", 1)[0]
+    url = f"{upstream_store.rstrip('/')}/{store_path_hash}.narinfo"
+    request = Request(url, headers={"User-Agent": "attic-weekly-missing"})
+    for attempt in range(retries + 1):
         try:
-            info = json.loads(result.stdout)
-        except json.JSONDecodeError as error:
-            raise RuntimeError(
-                f"could not query upstream cache {upstream_store}: {result.stderr.strip()}"
-            ) from error
-        cached.update(path for path, value in info.items() if value is not None)
-    return cached
+            with urlopen(request, timeout=timeout) as response:
+                fields = {}
+                for line in response.read().decode().splitlines():
+                    key, separator, value = line.partition(": ")
+                    if separator:
+                        fields[key] = value
+                return (
+                    path,
+                    int(fields.get("FileSize", 0)),
+                    int(fields.get("NarSize", 0)),
+                )
+        except HTTPError as error:
+            if error.code == 404:
+                return path, None, None
+            if attempt == retries:
+                raise
+        except (TimeoutError, URLError):
+            if attempt == retries:
+                raise
+    raise RuntimeError(f"failed to query {url}")
+
+
+def upstream_cached_paths(
+    paths,
+    upstream_store,
+    workers=16,
+    progress_every=500,
+    timeout=30,
+    retries=2,
+):
+    paths = sorted(set(paths))
+    cached = set()
+    file_bytes = 0
+    nar_bytes = 0
+    started = time.monotonic()
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = [
+            executor.submit(narinfo, path, upstream_store, timeout, retries)
+            for path in paths
+        ]
+        for completed, future in enumerate(as_completed(futures), 1):
+            path, file_size, nar_size = future.result()
+            if file_size is not None:
+                cached.add(path)
+                file_bytes += file_size
+                nar_bytes += nar_size
+            if progress_every > 0 and (
+                completed % progress_every == 0 or completed == len(paths)
+            ):
+                elapsed = int(time.monotonic() - started)
+                print(
+                    f"upstream cache: checked {completed}/{len(paths)}, "
+                    f"available={len(cached)}, elapsed={elapsed}s",
+                    flush=True,
+                )
+    return cached, file_bytes, nar_bytes
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run a read-only Attic database query.")
+    parser = argparse.ArgumentParser(
+        description="Run a read-only Attic database query."
+    )
     parser.add_argument("database")
     parser.add_argument("sql")
     parser.add_argument("--tabs", action="store_true")

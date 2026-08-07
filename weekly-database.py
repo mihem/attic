@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+from pathlib import Path
 
 from attic_db import cached_hashes, upstream_cached_paths
 
@@ -15,18 +16,32 @@ def main():
     parser.add_argument("missing_names")
     parser.add_argument("database")
     parser.add_argument("cache_name")
-    parser.add_argument("--nix", default="/nix/var/nix/profiles/default/bin/nix")
+    parser.add_argument("--upstream-paths-file", required=True)
     parser.add_argument("--upstream-store", default="https://cache.nixos.org")
+    parser.add_argument("--narinfo-workers", type=int, default=16)
     args = parser.parse_args()
 
     with open(args.outpaths_json) as handle:
         outpaths = json.load(handle)
 
     cached = cached_hashes(args.database, args.cache_name)
-    not_in_attic = [
-        path for path in outpaths.values() if store_hash(path) not in cached
-    ]
-    upstream = upstream_cached_paths(args.nix, not_in_attic, args.upstream_store)
+    upstream_file = Path(args.upstream_paths_file)
+    if upstream_file.exists():
+        upstream = set(upstream_file.read_text().splitlines())
+    else:
+        not_in_attic = [
+            path for path in outpaths.values() if store_hash(path) not in cached
+        ]
+        upstream, file_bytes, nar_bytes = upstream_cached_paths(
+            not_in_attic,
+            args.upstream_store,
+            workers=args.narinfo_workers,
+        )
+        upstream_file.write_text(
+            "\n".join(sorted(upstream)) + ("\n" if upstream else "")
+        )
+        print(f"upstream compressed size: {file_bytes / 1024**3:.2f} GiB")
+        print(f"upstream unpacked size: {nar_bytes / 1024**3:.2f} GiB")
     missing = [
         name
         for name, path in sorted(outpaths.items())

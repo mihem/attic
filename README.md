@@ -115,14 +115,18 @@ R_NIXPKGS_DATE=2026-05-25 ./weekly-missing.sh
 ```
 
 It evaluates all non-blacklisted `pkgs.rPackages` derivations for the selected
-`R_NIXPKGS_DATE`, checks the Attic database for already cached store paths, and
-builds/uploads only paths missing from `r-packages`.
+`R_NIXPKGS_DATE`. Concurrent `.narinfo` requests separate paths already
+available from `cache.nixos.org` from paths that need to be built. Upstream
+paths are not copied into Attic; only paths missing from both caches are built
+and uploaded.
 
 Two implementation details are important for speed:
 
 1. Use [`nix-fast-build`](https://github.com/Mic92/nix-fast-build) for parallel
    evaluation/building and direct Attic upload.
-2. Optimize Attic chunk size for weekly R/Bioconductor deltas, where many large
+2. Save the first parallel cache-status result for the entire run, so later
+   build batches and report generation do not repeat upstream requests.
+3. Optimize Attic chunk size for weekly R/Bioconductor deltas, where many large
    package outputs are similar but not byte-identical across dates.
 
 The workflow uses `nix-fast-build --attic-cache r-packages`. There is no separate

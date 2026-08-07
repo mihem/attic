@@ -6,7 +6,7 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-from attic_db import cached_hashes, upstream_cached_paths
+from attic_db import cached_hashes
 
 
 def store_hash(out_path):
@@ -80,17 +80,14 @@ def main():
         "--database", default="postgresql:///attic?host=/var/run/postgresql"
     )
     parser.add_argument("--nix", default="/nix/var/nix/profiles/default/bin/nix")
-    parser.add_argument("--upstream-store", default="https://cache.nixos.org")
+    parser.add_argument("--upstream-paths-file", required=True)
     args = parser.parse_args()
 
     outpaths = nix_eval_outpaths(args.date, args.blacklist, args.nix)
     cached = cached_hashes(args.database, args.cache)
     blacklist = read_blacklist(args.blacklist)
 
-    not_in_attic = [
-        path for path in outpaths.values() if store_hash(path) not in cached
-    ]
-    upstream = upstream_cached_paths(args.nix, not_in_attic, args.upstream_store)
+    upstream = set(Path(args.upstream_paths_file).read_text().splitlines())
     available = []
     missing = []
     store_paths = []

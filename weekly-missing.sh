@@ -25,6 +25,7 @@ MIN_FREE_GB="${MIN_FREE_GB:-300}"
 RUN_GC="${RUN_GC:-auto}"
 DRY_RUN="${DRY_RUN:-0}"
 NO_PROGRESS_LIMIT="${NO_PROGRESS_LIMIT:-3}"
+NARINFO_WORKERS="${NARINFO_WORKERS:-16}"
 
 LOGDIR="$DIR/logs"
 LOG="$LOGDIR/weekly-missing-$(date +%Y-%m-%d_%H%M%S).log"
@@ -37,6 +38,7 @@ MISSING_NIX="$TMPDIR/missing-packages.nix"
 RESULTS_JSON="$TMPDIR/results.json"
 BUILT_PATHS="$TMPDIR/built-paths.txt"
 PREV_MISSING_NAMES="$TMPDIR/previous-missing-packages.txt"
+UPSTREAM_PATHS="$TMPDIR/upstream-paths.txt"
 
 mkdir -p "$LOGDIR" "$NIX_CONF_DIR"
 cat >"$NIX_CONF_DIR/nix.conf" <<NIXCONF
@@ -118,9 +120,10 @@ check_missing() {
 		'let x = import ./packages.nix; in builtins.mapAttrs (name: value: value.outPath) x.rPackagesSet' \
 		>"$OUTPATHS_JSON"
 
-	echo "[$(date)] Checking Attic and cache.nixos.org..."
+	echo "[$(date)] Checking Attic and saved/direct upstream cache status..."
 	python3 "$DIR/weekly-database.py" "$OUTPATHS_JSON" "$MISSING_NAMES" "$ATTIC_DATABASE" "$CACHE" \
-		--nix "$NIX" --upstream-store "$UPSTREAM_STORE"
+		--upstream-paths-file "$UPSTREAM_PATHS" --upstream-store "$UPSTREAM_STORE" \
+		--narinfo-workers "$NARINFO_WORKERS"
 }
 
 maybe_gc() {
@@ -170,7 +173,7 @@ echo "[$(date)] Weekly missing-package run"
 echo "R_NIXPKGS_DATE=$R_NIXPKGS_DATE BP_CELLS_REV=$BP_CELLS_REV BP_CELLS_SHA256=$BP_CELLS_SHA256"
 echo "SC_MISC_REV=$SC_MISC_REV SC_MISC_SHA256=$SC_MISC_SHA256 PERM_FDP_REV=$PERM_FDP_REV PERM_FDP_SHA256=$PERM_FDP_SHA256"
 echo "CACHE=$CACHE CACHE_URL=$CACHE_URL ATTIC_DATABASE=$ATTIC_DATABASE"
-echo "UPSTREAM_STORE=$UPSTREAM_STORE"
+echo "UPSTREAM_STORE=$UPSTREAM_STORE NARINFO_WORKERS=$NARINFO_WORKERS"
 echo "MAX_JOBS=$MAX_JOBS BUILD_CORES=$BUILD_CORES DRY_RUN=$DRY_RUN"
 echo "BATCH_SIZE=$BATCH_SIZE MAX_BATCHES=$MAX_BATCHES RUN_GC=$RUN_GC MIN_FREE_GB=$MIN_FREE_GB NO_PROGRESS_LIMIT=$NO_PROGRESS_LIMIT"
 echo "free disk at start: $(free_gb) GiB"
@@ -220,7 +223,7 @@ if [ "$DRY_RUN" = "1" ]; then
 	echo "[$(date)] Dry run; not writing report."
 else
 	echo "[$(date)] Writing report for $R_NIXPKGS_DATE..."
-	python3 "$DIR/report-date.py" "$R_NIXPKGS_DATE" --blacklist "$DIR/blacklist.txt" --cache "$CACHE" --database "$ATTIC_DATABASE" --nix "$NIX" --upstream-store "$UPSTREAM_STORE"
+	python3 "$DIR/report-date.py" "$R_NIXPKGS_DATE" --blacklist "$DIR/blacklist.txt" --cache "$CACHE" --database "$ATTIC_DATABASE" --nix "$NIX" --upstream-paths-file "$UPSTREAM_PATHS"
 fi
 
 echo "[$(date)] Done."
