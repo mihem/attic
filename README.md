@@ -129,6 +129,12 @@ The workflow uses `nix-fast-build --attic-cache r-packages`. There is no separat
 manual `attic push` step in the normal workflow, so cache checking, building, and
 uploading stay in one pass.
 
+Reports measure Attic contents only. If an output is already available from an
+upstream substituter such as `cache.nixos.org`, Nix downloads it instead of
+building it and `--attic-ignore-upstream-cache-filter` ensures that it is still
+uploaded to Attic. It is therefore no longer reported missing after the upload
+completes.
+
 Large date jumps can invalidate most store paths. For those cases the workflow
 runs in batches and only runs garbage collection if free disk space drops below
 the configured threshold:
