@@ -49,9 +49,9 @@ each custom package, so a run remains reproducible from its log.
 Per-date package availability reports are written to [`reports/`](reports/).
 Each report contains:
 
-- `available.txt`: package names available in Attic or in `cache.nixos.org` for that date.
-- `available-store-paths.tsv`: available package names and exact Nix store paths.
-- `missing.txt`: evaluated package names unavailable from Attic and `cache.nixos.org`.
+- `available.txt`: package names available in Attic for that date.
+- `available-store-paths.tsv`: package names and exact Nix store paths.
+- `missing.txt`: evaluated package names still missing from Attic.
 - `blacklisted.txt`: blacklist snapshot used for that date.
 - `summary.json`: machine-readable counts.
 
