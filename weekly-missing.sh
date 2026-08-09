@@ -27,6 +27,8 @@ NO_PROGRESS_LIMIT="${NO_PROGRESS_LIMIT:-3}"
 
 LOGDIR="$DIR/logs"
 LOG="$LOGDIR/weekly-missing-$(date +%Y-%m-%d_%H%M%S).log"
+BLACKLIST="$DIR/blacklist.txt"
+BLACKLIST_DATE_FILE="$DIR/.blacklist-date"
 TMPDIR="$(mktemp -d "$DIR/.weekly-missing.XXXXXX")"
 NIX_CONF_DIR="$TMPDIR/nix-conf"
 OUTPATHS_JSON="$TMPDIR/outpaths.json"
@@ -80,6 +82,24 @@ resolve_weekly_inputs() {
 		--perm-fdp-sha256 "$PERM_FDP_SHA256")"
 	eval "$resolved_inputs"
 	export R_NIXPKGS_DATE BP_CELLS_REV BP_CELLS_SHA256 SC_MISC_REV SC_MISC_SHA256 PERM_FDP_REV PERM_FDP_SHA256
+}
+
+prepare_blacklist() {
+	if [ ! -f "$BLACKLIST_DATE_FILE" ]; then
+		printf '%s\n' "$R_NIXPKGS_DATE" >"$BLACKLIST_DATE_FILE"
+		echo "[$(date)] Associated existing blacklist with $R_NIXPKGS_DATE."
+		return
+	fi
+
+	IFS= read -r blacklist_date <"$BLACKLIST_DATE_FILE" || blacklist_date=""
+	if [ "$blacklist_date" = "$R_NIXPKGS_DATE" ]; then
+		echo "[$(date)] Reusing blacklist for $R_NIXPKGS_DATE."
+		return
+	fi
+
+	: >"$BLACKLIST"
+	printf '%s\n' "$R_NIXPKGS_DATE" >"$BLACKLIST_DATE_FILE"
+	echo "[$(date)] Cleared blacklist from $blacklist_date for new date $R_NIXPKGS_DATE."
 }
 
 select_batch() {
@@ -159,11 +179,12 @@ build_batch() {
 		echo "[$(date)] nix-fast-build exited with status $status; summarizing anyway."
 	fi
 
-	python3 "$DIR/update-blacklist.py" "$RESULTS_JSON" "$DIR/blacklist.txt" "$BUILT_PATHS"
+	python3 "$DIR/update-blacklist.py" "$RESULTS_JSON" "$BLACKLIST" "$BUILT_PATHS"
 	python3 "$DIR/summarize-results.py" "$RESULTS_JSON"
 }
 
 resolve_weekly_inputs
+prepare_blacklist
 
 echo "[$(date)] Weekly missing-package run"
 echo "R_NIXPKGS_DATE=$R_NIXPKGS_DATE BP_CELLS_REV=$BP_CELLS_REV BP_CELLS_SHA256=$BP_CELLS_SHA256"
@@ -218,7 +239,7 @@ if [ "$DRY_RUN" = "1" ]; then
 	echo "[$(date)] Dry run; not writing report."
 else
 	echo "[$(date)] Writing report for $R_NIXPKGS_DATE..."
-	python3 "$DIR/report-date.py" "$R_NIXPKGS_DATE" --blacklist "$DIR/blacklist.txt" --cache "$CACHE" --database "$ATTIC_DATABASE" --nix "$NIX"
+	python3 "$DIR/report-date.py" "$R_NIXPKGS_DATE" --blacklist "$BLACKLIST" --cache "$CACHE" --database "$ATTIC_DATABASE" --nix "$NIX"
 fi
 
 echo "[$(date)] Done."
