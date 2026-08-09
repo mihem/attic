@@ -150,8 +150,9 @@ build_batch() {
 		--no-link \
 		--attic-cache "$CACHE" \
 		--attic-ignore-upstream-cache-filter \
-		--no-nom
-	status="$?"
+		--no-nom 2>&1 \
+		| grep --line-buffered -E '^(  building |INFO:nix_fast_build|WARNING:nix_fast_build|ERROR:nix_fast_build|error:|       )'
+	status="${PIPESTATUS[0]}"
 	set -e
 
 	if [ "$status" -ne 0 ]; then
