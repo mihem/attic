@@ -148,7 +148,6 @@ build_batch() {
 		--option cores "$BUILD_CORES" \
 		--result-file "$RESULTS_JSON" \
 		--no-link \
-		--skip-cached \
 		--attic-cache "$CACHE" \
 		--attic-ignore-upstream-cache-filter \
 		--no-nom
