@@ -171,6 +171,7 @@ build_batch() {
 		--attic-cache "$CACHE" \
 		--attic-ignore-upstream-cache-filter \
 		--no-nom 2>&1 \
+		| tr '\000' '\n' \
 		| grep --line-buffered -E '^(  building |INFO:nix_fast_build|WARNING:nix_fast_build|ERROR:nix_fast_build|error:|       )'
 	status="${PIPESTATUS[0]}"
 	set -e
