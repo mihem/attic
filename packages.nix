@@ -72,6 +72,7 @@ let
   };
 
   BPCells = pkgs.rPackages.buildRPackage {
+    pname = "BPCells";
     name = "BPCells";
     src = "${BPCells-src}/r";
     postPatch = "patchShebangs configure";
@@ -112,6 +113,7 @@ let
   };
 
   permFDP = pkgs.rPackages.buildRPackage {
+    pname = "permFDP";
     name = "permFDP";
     src = permFDP-src;
     propagatedBuildInputs = builtins.attrValues {
@@ -130,6 +132,7 @@ let
   };
 
   scMisc = pkgs.rPackages.buildRPackage {
+    pname = "scMisc";
     name = "scMisc";
     src = scMisc-src;
     propagatedBuildInputs = builtins.attrValues {
