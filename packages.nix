@@ -76,7 +76,8 @@ let
     name = "BPCells";
     src = "${BPCells-src}/r";
     postPatch = "patchShebangs configure";
-    nativeBuildInputs = [ pkgs.hdf5.dev ];
+    nativeBuildInputs = [ pkgs.pkg-config ];
+    buildInputs = [ pkgs.hdf5 ];
     propagatedBuildInputs = builtins.attrValues {
       inherit (pkgs.rPackages)
         magrittr
