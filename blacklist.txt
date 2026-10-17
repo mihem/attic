@@ -634,6 +634,7 @@ decemedip
 decon
 define
 delaunay
+delta.sharing
 dfdr
 dfpk
 dialectR
@@ -697,6 +698,7 @@ flowQ
 flowUtils
 fluidsynth
 focalCall
+foresightr
 foster
 fpmoutliers
 freestiler
@@ -823,6 +825,7 @@ ipf
 ipptoolbox
 iriR
 isodistrreg
+jack
 jiebaRS
 joda
 jsslintr
@@ -897,7 +900,6 @@ moanin
 modchart
 modiscloud
 mosbi
-motifbreakR
 moveVis
 mpbart
 msgl
@@ -919,6 +921,7 @@ netbenchmark
 netcox
 networkBMA
 networkTomography
+neuroim2
 nightmares
 nlmixr
 npcopTest
@@ -1016,6 +1019,7 @@ rama
 rangemap
 rankUncertainty
 rasterly
+ratioOfQsprays
 raymolecule
 rayrender
 rayshader
@@ -1028,6 +1032,7 @@ rcrypt
 rdddr
 receptLoss
 restfulSEData
+resultant
 rgdal
 rgeos
 rgph
@@ -1107,7 +1112,6 @@ snapCGH
 snappier
 soGGi
 sojourner
-spacc
 spacey
 spade
 sparselu
@@ -1132,6 +1136,7 @@ surveycore
 surveytidy
 sutteForecastR
 swissMrP
+symbolicQspray
 synRNASeqNet
 synapter
 synapterdata
